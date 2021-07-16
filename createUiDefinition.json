@@ -1,0 +1,800 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/0.1.2-preview/CreateUIDefinition.MultiVm.json#",
+	"handler": "Microsoft.Azure.CreateUIDef",
+	"version": "0.1.2-preview",
+	"parameters": {
+		"config": {
+			"isWizard":true,
+			"basics": {
+				"description": "**Azure Sentinel Difenda MDR** deployment, see more information about this project [here](https://www.difenda.com/MDR/).",
+				"location": {
+					"label": "Location",
+					"toolTip": "Location for all resources",
+					"resourceTypes": [
+						"Microsoft.OperationalInsights"
+					]
+				}
+			}
+		},
+		"basics": [
+			{
+				"name": "rgName",
+				"type": "Microsoft.Common.TextBox",
+				"label": "Resource Group Name for Sentinel objects",
+				"placeholder": "",
+				"defaultValue": "mdr-prod-rg",
+				"toolTip": "Enter a resource group name for the Sentinel workspace and associated solutions.",
+				"constraints": {
+					"required": true,
+					"regex": "^[A-Za-z][A-Za-z0-9-]{1,88}[A-Za-z0-9]$",
+					"validationMessage": "Only alphanumeric characters are allowed, and the value must be 1-30 characters long."
+				},
+				"visible": true
+			},
+			{
+				"name": "termsAck",
+				"type": "Microsoft.Common.Section",
+				"label": "Service terms acknowledgement",
+				"elements": [
+					{
+						"name": "serviceTerms",
+						"type": "Microsoft.Common.TextBlock",
+						"visible": true,
+						"options": {
+							"text": "By continuing with this deployment, I acknowledge I have read the Difenda MDR Service Terms and Conditions, also established in the Master Service Agreement and Statement of Work.",
+							"link": {
+								"label":"Learn more",
+								"uri": "https://www.difenda.com/terms"
+							}
+						}
+					},
+					{
+						"name": "emailAddress",
+						"type": "Microsoft.Common.TextBox",
+						"label": "Email",
+						"placeholder": "user@domain",
+						"defaultValue": "",
+						"toolTip": "Please enter a valid email account",
+						"constraints": {
+							"required": true,
+							"regex": "^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\\.[a-zA-Z0-9-.]+$",
+							"validationMessage": "Email is not valid. Please re-enter."
+						},
+						"visible": true
+					},
+					{
+						"name": "legalAccept",
+						"type": "Microsoft.Common.CheckBox",
+						"defaultValue": false,
+						"label": "I have read Difenda MDR service terms and conditions.",
+						"constraints": {
+							"required": true,
+							"validationMessage": "Please acknowledge the terms and conditions."
+						}
+					},
+					{
+						"type": "Microsoft.Common.TextBox",
+						"name": "companyName",
+						"label": "Company name:",
+						"toolTip": "Enter company name to be used by Difenda.",
+						"constraints": {
+							"required": true,
+							"regex": "^[a-zA-Z]{4,10}$",
+							"validationMessage": "Name not valid. Name must be 4-10 characters."
+						}
+					}
+				],
+				"visible": true
+			}
+		],
+		"steps": [
+			{
+				"name": "sentinelWorkspace",
+				"label": "Sentinel workspace",
+				"elements": [
+					{
+						"name": "existingWorkspaceSection",
+						"type": "Microsoft.Common.Section",
+						"label": "Here you can select an existing Log Analytics workspace. If Sentinel has not been enabled on this workspace, it will be enabled.",
+						"elements": [
+							{
+								"name": "learnMoreSentinelTextBlock",
+								"type": "Microsoft.Common.TextBlock",
+								"visible": true,
+								"options": {
+									"text": "Learn more about Azure Sentinel.",
+									"link": {
+										"label": "Learn more",
+										"uri": "https://www.difenda.com/AzureSentinel"
+									}
+								}
+							},
+							{
+								"name": "leaveEmptyTextBlock",
+								"type": "Microsoft.Common.TextBlock",
+								"visible": true,
+								"options": {
+									"text": "To create a new workspace, do no select an existing resource."
+								}
+							},
+							{
+								"name": "laWorkspaceSelector",
+								"type": "Microsoft.Solutions.ResourceSelector",
+								"label": "Select existing Log Analytics workspace",
+								"resourceType": "Microsoft.OperationalInsights/workspaces",
+								"options": {
+									"filter": {
+										"subscription": "onBasics",
+										"location": "onBasics"
+									}
+								}
+							}
+						]
+					},
+					{
+						"name": "newWorkspaceSection",
+						"type": "Microsoft.Common.Section",
+						"label": "Or, enter the name for a new Sentinel workspace to be created.",
+						"elements": [
+							{
+								"name": "infoBox1",
+								"type": "Microsoft.Common.InfoBox",
+								"visible": "[empty(steps('sentinelWorkspace').existingWorkspaceSection.laWorkspaceSelector.name)]",
+								"options": {
+									"icon": "Info",
+									"text": "If an existing workspace is selected above, this field will be ignored."
+								}
+							},
+							{
+								"name": "workspaceName",
+								"type": "Microsoft.Common.TextBox",
+								"label": "Enter the name of a new Workspace to be created.",
+								"placeholder": "",
+								"defaultValue": "mdr-prod-ws",
+								"toolTip": "The Workspace name should include 4-63 letters, digits or '-'. The '-' shouldn't be the first or the last symbol. If this value is provided, existing workspaces will be omitted and new Log Analytics and Sentinel workspaces will be created.",
+								"constraints": {
+									"required": true,
+									"regex": "^[A-Za-z0-9][A-Za-z0-9-]+[A-Za-z0-9]$",
+									"validationMessage": "Only alphanumeric characters and '-' are allowed, and the value must be 1-30 characters long. First and last characters must be alphanumeric."
+								},
+								"visible": "[empty(steps('sentinelWorkspace').existingWorkspaceSection.laWorkspaceSelector.name)]"
+							}
+						],
+						"visible": "[empty(steps('sentinelWorkspace').existingWorkspaceSection.laWorkspaceSelector.name)]"
+					},
+					{
+						"name": "workspaceDetails",
+						"type": "Microsoft.Common.Section",
+						"label": "Sentinel workspace details",
+						"elements": [
+							{
+								"name": "quotaTextBlock",
+								"type": "Microsoft.Common.TextBlock",
+								"visible": true,
+								"options": {
+									"text": "You can configure a daily cap and limit the daily ingestion for your workspace. This setting must be used carefully as it can result in data loss for the rest of the day once the limit is reached, impacting the log collection and detection capabilities."
+								}
+							},
+							{
+								"name": "dailyQuota",
+								"type": "Microsoft.Common.TextBox",
+								"label": "Daily ingestion limit in GBs. Enter 0 for no limit.",
+								"placeholder": "",
+								"defaultValue": "0",
+								"toolTip": "This limit doesn't apply to the following tables: SecurityAlert, SecurityBaseline, SecurityBaselineSummary, SecurityDetection, SecurityEvent, WindowsFirewall, MaliciousIPCommunication, LinuxAuditLog, SysmonEvent, ProtectionStatus, WindowsEvent",
+								"constraints": {
+									"required": true,
+									"regex": "^[0-9]{1,4}$",
+									"validationMessage": "Only numbers allowed, and the value must be 1-4 characters long."
+								},
+								"visible": true
+							},
+							{
+								"name": "retentionTextBlock",
+								"type": "Microsoft.Common.TextBlock",
+								"visible": true,
+								"options": {
+									"text": "Data retention at the workspace level can be configured from 30 to 730 days (2 years) unless the legacy Free pricing tier is in use. Retention for individual data types can also be set to as low as 4 days. To retain data longer than 730 days, consider using Log Analytics workspace data export. Log Analytic workspaces with the Sentinel solution are entitled to 90 days of data retention at no additional cost."
+								}
+							},
+                            {
+                                "name": "retentionSlider",
+                                "type": "Microsoft.Common.Slider",
+                                "min": 90,
+                                "max": 730,
+                                "label": "Retention in Days",
+                                "defaultValue": 90,
+                                "showStepMarkers": false,
+                                "toolTip": "Select the data retention period",
+                                "constraints": {
+                                    "required": false
+                                },
+                                "visible": true
+                            },
+							{
+								"name": "infoBox2",
+								"type": "Microsoft.Common.InfoBox",
+								"visible": "[not(empty(steps('sentinelWorkspace').existingWorkspaceSection.laWorkspaceSelector.name))]",
+								"options": {
+									"icon": "Info",
+									"text": "These values will overwrite existing settings."
+								}
+							}
+						]
+					}
+				]
+			},
+			{
+				"name": "securityPermissions",
+				"label": "Security requirements",
+				"elements": [
+					{
+						"name": "securityPermissionsTextBlock",
+						"type": "Microsoft.Common.TextBlock",
+						"visible": true,
+						"options": {
+							"text": "To provide integrations and automations used by the Difenda MDR service, the following required credentials will be automatically created and permissions will be assigned. Please refer to the onboard documentation provided for details.",
+							"link": {
+								"label": "Learn more",
+								"uri": "https://www.difenda.com/MDRonboard"
+							}
+						}
+					},
+					{
+						"name": "keyVaultSection",
+						"type": "Microsoft.Common.Section",
+						"label": "Key vault information",
+						"elements": [
+							{
+								"name": "secParamTextBlock",
+								"type": "Microsoft.Common.TextBlock",
+								"visible": true,
+								"options": {
+									"text": "A Key vault to be used by Service principals and Service account will be created."
+								}
+							},
+							{
+								"name": "keyVaultName",
+								"type": "Microsoft.Common.TextBox",
+								"label": "Key vault name",
+								"defaultValue": "[concat('kv-mdr-prod-', toUpper(basics('termsAck').companyName))]",
+								"toolTip": "Please enter a valid Key vault name. Key vault names are limited to 24 characters long and can contain alphanumeric and '-' only.",
+								"constraints": {
+									"required": true,
+									"regex": "^[a-zA-Z][a-zA-Z0-9-]{4,22}[a-zA-Z0-9]$",
+									"validationMessage": "Key vault name is not valid. Please enter a valid Key vault name. Key vault names are limited between 4 and 24 characters long and can contain alphanumeric and '-' only."
+								},
+								"visible": true
+							}
+						]
+					},
+					{
+						"name": "servicePrincipalSection",
+						"type": "Microsoft.Common.Section",
+						"label": "Service Principal",
+						"elements": [
+							{
+								"name": "servicePrincipalTextBlock",
+								"type": "Microsoft.Common.TextBlock",
+								"visible": true,
+								"options": {
+									"text": "The following Service Principal credentials will be created.",
+									"link": {
+										"label": "Learn more",
+										"uri": "https://docs.microsoft.com/en-us/azure/active-directory/roles/permissions-reference#security-administrator"
+									}
+								}
+							},
+							{
+								"name": "intgrationPrincipalName",
+								"type": "Microsoft.Common.TextBox",
+								"label": "Integrations Service Principal name",
+								"placeholder": "",
+								"defaultValue": "mdr-prod-int-sp",
+								"toolTip": "Enter the Service Principal name for integrations",
+								"constraints": {
+									"required": false,
+									"regex": "(^[A-Za-z0-9][A-Za-z0-9-]{2,62}[A-Za-z0-9]$)",
+									"validationMessage": "Only alphanumeric characters are allowed, and the value must be 1-30 characters long."
+								},
+								"visible": true
+							},
+							{
+								"name": "tiPrincipalName",
+								"type": "Microsoft.Common.TextBox",
+								"label": "TI platform Service Principal name",
+								"placeholder": "",
+								"defaultValue": "mdr-prod-ti-sp",
+								"toolTip": "Enter the Service Principal name to integrate Threat Intelligence platform",
+								"constraints": {
+									"required": false,
+									"regex": "(^[A-Za-z0-9][A-Za-z0-9-]{2,62}[A-Za-z0-9]$)",
+									"validationMessage": "Only alphanumeric characters are allowed, and the value must be 1-30 characters long."
+								},
+								"visible": true
+							},
+							{
+								"name": "devopsPrincipalName",
+								"type": "Microsoft.Common.TextBox",
+								"label": "DevOps Service Principal name",
+								"placeholder": "",
+								"defaultValue": "mdr-prod-devops-sp",
+								"toolTip": "Enter the Service Principal name to integrate Threat Intelligence platform",
+								"constraints": {
+									"required": false,
+									"regex": "(^[A-Za-z0-9][A-Za-z0-9-]{2,62}[A-Za-z0-9]$)",
+									"validationMessage": "Only alphanumeric characters are allowed, and the value must be 1-30 characters long."
+								},
+								"visible": true
+							}
+						],
+						"visible": true
+					},
+					{
+						"name": "securityGroupSection",
+						"type": "Microsoft.Common.Section",
+						"label": "Security group",
+						"elements": [
+							{
+								"name": "securityGroupTextBlock",
+								"type": "Microsoft.Common.TextBlock",
+								"visible": true,
+								"options": {
+									"text": "The following Azure AD Security group will be created with Security Administrator role",
+									"link": {
+										"label": "Learn more",
+										"uri": "https://docs.microsoft.com/en-us/azure/active-directory/roles/permissions-reference#security-administrator"
+									}
+								}
+							},
+							{
+								"name": "securityGroup",
+								"type": "Microsoft.Common.TextBox",
+								"label": "Security group name",
+								"placeholder": "",
+								"defaultValue": "mdr-prod-group",
+								"toolTip": "Enter the name of the Security group",
+								"constraints": {
+									"required": false,
+									"regex": "(^[A-Za-z0-9][A-Za-z0-9-]{2,62}[A-Za-z0-9]$)",
+									"validationMessage": "Only alphanumeric characters are allowed, and the value must be 1-30 characters long."
+								},
+								"visible": true
+							}
+						],
+						"visible": true
+					}
+				]
+			},
+			{
+				"name": "dataConnectors",
+				"label": "Data connectors",
+				"elements": [
+					{
+						"name": "configureDataConnectors",
+						"type": "Microsoft.Common.Section",
+						"label": "Enable Sentinel Data connectors",
+						"elements": [
+							{
+								"name": "dataConnectorsDropDown",
+								"type": "Microsoft.Common.DropDown",
+								"label": "Do you want to enable Sentinel Data connectors?",
+								"defaultValue": "No",
+								"toolTip": "",
+								"constraints": {
+									"allowedValues": [
+										{
+											"label": "No",
+											"value":false
+										},
+										{
+											"label": "Yes",
+											"value":true
+										}
+									],
+									"required": false
+								},
+								"visible": true
+							}
+						]
+					},					
+					{
+						"name": "whichDataConnectors",
+						"type": "Microsoft.Common.Section",
+						"label": "Sentinel Data connectors",
+						"visible": "[steps('dataConnectors').configureDataConnectors.dataConnectorsDropDown]",
+						"elements": [
+							{
+								"name": "whichDataConnectorsTextBlock",
+								"type": "Microsoft.Common.TextBlock",
+								"visible": "[steps('dataConnectors').configureDataConnectors.dataConnectorsDropDown]",
+								"options": {
+									"text": "Please select which connectors you want to onboard into your Azure Sentinel environment"
+								}
+							},
+							{
+								"name": "enableDataConnectorsKind",
+								"type": "Microsoft.Common.DropDown",
+								"label": "Select data connectors to onboard",
+								"placeholder": "",
+								"multiselect": true,
+								"defaultValue": "o365",
+								"toolTip": "Select the data connectors that you would like to enable",
+								"constraints": {
+									"allowedValues": [
+										{
+											"label": "Office365",
+											"value": "Office365"
+										},
+										{
+											"label": "Defender for Identity",
+											"value": "AzureAdvancedThreatProtection"
+										},
+										{
+											"label": "Azure AD Identity Protection",
+											"value": "AzureActiveDirectory"
+										},
+										{
+											"label": "Defender for Endpoint",
+											"value": "MicrosoftDefenderAdvancedThreatProtection"
+										},
+										{
+											"label": "Azure Security Center",
+											"value": "AzureSecurityCenter"
+										},
+										{
+											"label": "Microsoft Cloud App Security",
+											"value": "MicrosoftCloudAppSecurity"
+										},
+										{
+											"label": "Azure Activity",
+											"value": "AzureActivity"
+										},
+										{
+											"label": "Security Events",
+											"value": "SecurityEvents"
+										},
+										{
+											"label": "Windows Firewall",
+											"value": "WindowsFirewall"
+										},
+										{
+											"label": "DNS Analytics",
+											"value": "DNS"
+										},
+										{
+											"label": "Linux Syslog",
+											"value": "Syslog"
+										}
+									],
+									"required": true
+								},
+								"visible": "[steps('dataConnectors').configureDataConnectors.dataConnectorsDropDown]"
+							},
+							{
+								"name": "mcasDiscoveryLogs",
+								"type": "Microsoft.Common.CheckBox",
+								"label": "Enable MCAS Discovery Logs?",
+								"toolTip": "Select to bring MCAS discovery logs into Sentinel. These logs are billed.",
+								"constraints": {
+									"required": false,
+									"validationMessage": "Please select"
+								},
+								"visible": "[if(contains(steps('dataConnectors').whichDataConnectors.enableDataConnectorsKind,'MicrosoftCloudAppSecurity'),true,false)]"
+							},
+							{
+								"name": "securityCollectionTier",
+								"type": "Microsoft.Common.OptionsGroup",
+								"label": "Security Events to stream into Sentinel ",
+								"defaultValue": "Recommended",
+								"toolTip" :"",
+								"constraints": {
+									"allowedValues":[
+										{
+											"label": "All",
+											"value": "All"
+										},
+										{
+											"label": "Common",
+											"value": "Recommended"
+										},
+										{
+											"label": "Minimal",
+											"value": "Minimal"
+										}
+									],
+									"required": true
+								},
+								"visible": "[if(contains(steps('dataConnectors').whichDataConnectors.enableDataConnectorsKind,'SecurityEvents'), true, false)]"
+							}
+						]
+					}
+				]
+			},
+			{
+				"name": "analyticsRules",
+				"label": "Analytics Rules",
+				"elements": [
+					{
+						"name": "showAnalyticRules",
+						"type": "Microsoft.Common.TextBlock",
+						"visible": "[empty(steps('dataConnectors').whichDataConnectors.enableDataConnectorsKind)]",
+						"options": {
+							"text": "No Data connectors have been selected."
+						}
+					},
+					{
+						"name": "enableFusionAlertTextBlock",
+						"type":"Microsoft.Common.TextBlock",
+						"visible": true,
+						"options": {
+							"text": "Fusion alert rule is enabled by default. Details here: https://docs.microsoft.com/azure/sentinel/fusion"
+						}
+					},
+					{
+						"name": "enableFusionAlertCheckBox",
+						"type": "Microsoft.Common.CheckBox",
+						"label": "Enable Fusion alert rule?",
+						"defaultValue": true,
+						"toolTip": "",
+						"constraints": {
+							"required": false
+						},
+						"visible": false
+					},
+					{
+						"name": "enableMicrosoftAlerts",
+						"type": "Microsoft.Common.CheckBox",
+						"label": "Enable Microsoft alert rules for selected connectors?",
+						"toolTip": "Select to enable Microsoft rules for the connectors you selected in the previous step.",
+						"constraints": {
+							"required": false,
+							"validationMessage": "Enables rules coming from selected Microsoft security products"
+						},
+						"visible": "[if(or(contains(steps('dataConnectors').whichDataConnectors.enableDataConnectorsKind,'AzureAdvancedThreatProtection'),contains(steps('dataConnectors').whichDataConnectors.enableDataConnectorsKind,'AzureActiveDirectoryIdentityProtection'),contains(steps('dataConnectors').whichDataConnectors.enableDataConnectorsKind,'MicrosoftDefenderAdvancedThreatProtection'),contains(steps('dataConnectors').whichDataConnectors.enableDataConnectorsKind,'AzureSecurityCenter'),contains(steps('dataConnectors').whichDataConnectors.enableDataConnectorsKind,'MicrosoftCloudAppSecurity')),true,false)]"
+					},
+					{
+						"name": "enableMLAlerts",
+						"type": "Microsoft.Common.CheckBox",
+						"label": "Enable ML Behavior Analytics alert rules?",
+						"toolTip": "Select to enable ML Behavior Analytics rules for selected connectors (SecurityEvents and/or Syslog)",
+						"constraints": {
+							"required": false,
+							"validationMessage": "Enables SSH and/or RDP anomalous login alerts"
+						},
+						"visible": "[if(or(contains(steps('dataConnectors').whichDataConnectors.enableDataConnectorsKind,'Syslog'),contains(steps('dataConnectors').whichDataConnectors.enableDataConnectorsKind,'SecurityEvents')), true, false)]"
+					},
+					{
+						"name": "enableScheduledAlerts",
+						"type": "Microsoft.Common.CheckBox",
+						"label": "Enable Scheduled alert rules for selected connectors?",
+						"toolTip": "Select to enable scheduled analytics rules for selected connectors",
+						"constraints": {
+							"required": false,
+							"validationMessage": "Enables Scheduled rules matching any of the selected connectors"
+						},
+						"visible": "[steps('dataConnectors').configureDataConnectors.dataConnectorsDropDown]"
+					}
+				]
+			},
+			{
+				"name": "integrationParam",
+				"label": "Integration Parameters",
+				"elements": [
+					{
+						"name":"paramExplain",
+						"type": "Microsoft.Common.TextBlock",
+						"visible": true,
+						"options": {
+							"text": "Difenda technical team will provide the information to be used in this section during the deployment."
+						}
+					},
+					{
+						"name": "managingTenant",
+						"type": "Microsoft.Common.Section",
+						"label": "Managing Tenant Information",
+						"visible": true,
+						"elements": [
+							{
+								"name": "managingTenantId",
+								"type": "Microsoft.Common.TextBox",
+								"label": "Difenda Tenant ID",
+								"placeholder": "",
+								"toolTip": "Enter the value provided by the Difenda team.",
+								"constraints": {
+									"required": true
+								},
+								"visible": true
+							},
+							{
+								"name": "contributorGroupId",
+								"type": "Microsoft.Common.TextBox",
+								"label": "Platform Group ID",
+								"placeholder": "",
+								"toolTip": "Enter the value provided by the Difenda team.",
+								"constraints": {
+									"required": true
+								},
+								"visible": true
+							},
+							{
+								"name": "readerGroupId",
+								"type": "Microsoft.Common.TextBox",
+								"label": "Operations Group ID",
+								"placeholder": "",
+								"toolTip": "Enter the value provided by the Difenda team.",
+								"constraints": {
+									"required": true
+								},
+								"visible": true
+							}
+						]
+					}
+				]
+			},
+			{
+				"name": "manualStep",
+				"label": "Managed Identity",
+				"elements": [
+					{
+						"name":"manualExplain1",
+						"type": "Microsoft.Common.TextBlock",
+						"visible": true,
+						"options": {
+							"text": "Before we can start with the automated deployment, we need your assistance creating a User assigned managed ID. This Service principal will be granted Global Administrator in your Azure AD and will be removed once the process completes. Below the details of the ID to be created."
+						}
+					},
+					{
+						"name": "managedIdDetails",
+						"type": "Microsoft.Common.Section",
+						"label": "Managed ID details",
+						"visible": true,
+						"elements": [
+							{
+								"name": "idName",
+								"type": "Microsoft.Common.TextBox",
+								"label": "User assigned managed ID name:",
+								"placeholder":"",
+								"defaultValue": "mdr-prod-managedid",
+								"toolTip": "Enter the name of the Managed ID.",
+								"constraints": {
+									"required": true,
+									"regex": "(^[A-Za-z0-9][A-Za-z0-9-]{1,28}[A-Za-z0-9]$)",
+									"validationMessage": "Only alphanumeric characters are allowed, and the value must be 1-30 characters long."
+								},
+								"visible": true
+							},
+							{
+								"name": "rGroup",
+								"type": "Microsoft.Common.TextBox",
+								"label": "Resource group:",
+								"placeholder": "",
+								"defaultValue": "[basics('rgName')]",
+								"toolTip": "Resource group to be used to create the ID.",
+								"constraints": {
+									"required": true,
+									"validations": [
+										{
+											"isValid": "[equals(basics('rgName'), steps('manualStep').managedIdDetails.rGroup)]",
+											"message": "This value cannot be changed."
+										}
+									]
+								},
+								"visible": true
+							},
+							{
+								"name": "role",
+								"type": "Microsoft.Common.TextBox",
+								"label": "Role assignment:",
+								"placeholder": "",
+								"defaultValue": "Global Administrator (ObjectId: bacec9fe-011b-4b8c-8a2e-e1f427abcb02)",
+								"toolTip": "Role assignment.",
+								"constraints": {
+									"required": true,
+									"validations": [
+										{
+											"isValid": "[equals(steps('manualStep').managedIdDetails.role,'Global Administrator (ObjectId: bacec9fe-011b-4b8c-8a2e-e1f427abcb02)')]",
+											"message": "This value cannot be changed."
+										}
+									]
+								},
+								"visible": true
+							}
+						]
+					},
+					{
+						"name": "scriptSection",
+						"type": "Microsoft.Common.Section",
+						"label": "Step 1: Start an Cloud Shell session.\n",
+						"visible": true,
+						"elements": [
+							{
+						        "name":"scriptCmd0",
+						        "type": "Microsoft.Common.TextBlock",
+						        "visible": true,
+						        "options": {
+							        "text": "Start a Cloud Shell session and select a PowerShell envonment."
+						        }
+					        }
+						]
+					},
+					{
+						"name": "uploadSection",
+						"type": "Microsoft.Common.Section",
+						"label": "Step 2: Download the Powershell script from the following location and upload it to the Azure CLI session.",
+						"visible": true,
+						"elements": [
+							{
+						        "name":"scriptCmd0",
+						        "type": "Microsoft.Common.TextBlock",
+						        "visible": true,
+						        "options": {
+							        "text": "MDR Powershell script",
+									"uri": "https://github.com/Cespinoz019/CreateAzSentinel/blob/main/mdr/Scripts/mdr-createServicePrincipals.ps1"
+
+						        }
+					        }
+						]
+					},
+					{
+						"name": "p2Section",
+						"type": "Microsoft.Common.Section",
+						"label": "Step 3: Use the following command line to run the Powershell script.",
+						"visible": true,
+						"elements": [
+							{
+						        "name":"scriptCmd0",
+						        "type": "Microsoft.Common.TextBlock",
+						        "visible": true,
+						        "options": {
+							        "text": "[concat('Connect-AzureAD;./mdrProvisioningScriptV1.ps1 -company ',toUpper(basics('termsAck').companyName),' -subscription ',subscription().subscriptionId,' -rg ',basics('rgName'),' -location ',location(),' -soar ',steps('securityPermissions').servicePrincipalSection.intgrationPrincipalName,' -ti ',steps('securityPermissions').servicePrincipalSection.tiPrincipalName,' -devops ',steps('securityPermissions').servicePrincipalSection.devopsPrincipalName,' -group ',steps('securityPermissions').securityGroupSection.securityGroup,' -key ', steps('securityPermissions').keyVaultSection.keyVaultName,' -managedid ',steps('manualStep').managedIdDetails.idName)]"
+						        }
+					        }
+						]
+					},
+					{
+						"name": "nextSection",
+						"type": "Microsoft.Common.Section",
+						"label": "Step 4: Execute the Powershell scrip and follow the instructions.",
+						"visible": true,
+						"elements": [
+							{
+						        "name":"scriptCmd0",
+						        "type": "Microsoft.Common.TextBlock",
+						        "visible": true,
+						        "options": {
+							        "text": "Follow the instructions provided by the Powershell script."
+
+						        }
+					        }
+						]
+					}
+				]
+			}
+		],
+		"outputs":{
+			"workspaceName": "[if(empty(steps('sentinelWorkspace').existingWorkspaceSection.laWorkspaceSelector.name),steps('sentinelWorkspace').newWorkspaceSection.workspaceName,steps('sentinelWorkspace').existingWorkspaceSection.laWorkspaceSelector.name)]",
+			"dailyQuota": "[steps('sentinelWorkspace').workspaceDetails.dailyQuota]",
+			"dataRetention": "[string(steps('sentinelWorkspace').workspaceDetails.retentionSlider)]",
+			"enableDataConnectorsKind": "[steps('dataConnectors').whichDataConnectors.enableDataConnectorsKind]",
+			"securityCollectionTier": "[steps('dataConnectors').whichDataConnectors.securityCollectionTier]",
+			"mcasDiscoveryLogs": "[steps('dataConnectors').whichDataConnectors.mcasDiscoveryLogs]",
+			"location": "[location()]",
+			"enableFusionAlert": true,
+			"enableMicrosoftAlerts": "[steps('analyticsRules').enableMicrosoftAlerts]",
+			"enableMLAlerts": "[steps('analyticsRules').enableMLAlerts]",
+			"enableScheduledAlerts": "[steps('analyticsRules').enableScheduledAlerts]",
+			"rgName": "[basics('rgName')]",
+			"keyVaultName": "[steps('securityPermissions').keyVaultSection.keyVaultName]",
+            "managedId": "[steps('manualStep').managedIdDetails.idName]",
+			"ackEmail": "[basics('termsAck').emailAddress]",
+			"legalAccept": "[basics('termsAck').legalAccept]",
+			"validDomain": "[substring(basics('termsAck').emailAddress,indexOf(basics('termsAck').emailAddress,'@'),sub(length(basics('termsAck').emailAddress),sub(indexOf(basics('termsAck').emailAddress,'@'),1)))]",
+            "subscription": "[subscription()]",
+			"companyName": "[toUpper(basics('termsAck').companyName)]",
+			"managedByTenantId": "[steps('integrationParam').managingTenant.managingTenantId]",
+			"contributorGroupId": "[steps('integrationParam').managingTenant.contributorGroupId]",
+			"readerGroupId": "[steps('integrationParam').managingTenant.readerGroupId]"
+		}
+	}
+}

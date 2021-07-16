@@ -1,0 +1,132 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "keyVaultName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name for the Key vault"
+            }
+        },
+        "rgName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name for the Resource group"
+            }
+        },
+        "subscription": {
+            "type": "string",
+            "metadata": {
+            "description": "Specifies the Subscription Id"
+            }
+        },
+        "tenantId": {
+            "type": "string",
+            "metadata": {
+            "description": "Specifies the Tenant Id."
+            }
+        },
+        "location": {
+            "type": "string",
+            "metadata": {
+                "description": "Location for all resources."
+            }
+        },
+        "roleGuid": {
+            "type": "string",
+            "defaultValue": "[newGuid()]"
+        },
+        "managedId": {
+            "type": "string",
+            "metadata": {
+                "description": "User assigned managed Id."
+            }
+        }
+    },
+    "functions": [],
+    "variables": {},
+    "resources": [
+        {
+            "name": "[parameters('managedId')]",
+            "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+            "apiVersion": "2018-11-30",
+            "location": "[parameters('location')]"
+        },
+        {
+            "type": "Microsoft.Resources/deploymentScripts",
+            "apiVersion": "2020-10-01",
+            "name": "process-wait",
+            "location": "[parameters('location')]",
+            "kind": "AzurePowerShell",
+            "dependsOn": [
+                "[concat('Microsoft.ManagedIdentity/userAssignedIdentities/', parameters('managedId'))]"
+            ],
+            "properties": {
+                "forceUpdateTag": "1",
+                "azPowerShellVersion": "3.0",
+                "identity": {
+                "type": "UserAssigned",
+                "userAssignedIdentities": {
+                    "[concat(parameters('subscription'), '/resourceGroups/', parameters('rgName'), '/providers/Microsoft.ManagedIdentity/userAssignedIdentities/', parameters('managedId'))]": {}
+                }
+            },
+                "arguments": "",
+                "scriptContent": "Start-Sleep -Seconds 30",
+                "supportingScriptUris": [],
+                "timeout": "PT30M",
+                "cleanupPreference": "Always",
+                "retentionInterval": "P1D"
+            }
+        },
+        {
+            "apiVersion": "2017-09-01",
+            "type": "Microsoft.Authorization/roleAssignments",
+            "name": "[parameters('roleGuid')]",
+            "properties": {
+                "roleDefinitionId": "[concat(subscription().id, '/providers/Microsoft.Authorization/roleDefinitions/', '8e3af657-a8ff-443c-a75c-2fe8c4bcb635')]",
+                "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities/', parameters('managedId')), '2018-11-30', 'Full').properties.principalId]",
+                "scope": "[concat(subscription().id,'/resourcegroups/',parameters('rgName'))]"
+            },
+            "dependsOn": [
+                "[concat('Microsoft.ManagedIdentity/userAssignedIdentities/', parameters('managedId'))]",
+                "[concat('Microsoft.Resources/deploymentScripts/', 'process-wait')]"
+            ]
+        },
+        {
+            "type": "Microsoft.KeyVault/vaults",
+            "apiVersion": "2019-09-01",
+            "name": "[parameters('keyVaultName')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[concat('Microsoft.ManagedIdentity/userAssignedIdentities/', parameters('managedId'))]"
+            ],
+            "properties": {
+                "sku": {
+                    "family": "A",
+                    "name": "Standard"
+                },
+                "tenantId": "[parameters('tenantId')]",
+                "accessPolicies": [
+                    {
+                        "tenantId": "[parameters('tenantId')]",
+                        "objectId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities/', parameters('managedId')), '2018-11-30', 'Full').properties.principalId]",
+                        "permissions": {
+                            "keys": [],
+                            "secrets": [ "All" ],
+                            "certificates": []
+                        }
+                    }
+                ],
+                "enabledForDeployment": false,
+                "enabledForDiskEncryption": false,
+                "enabledForTemplateDeployment": false,
+                "enableSoftDelete": true,
+                "softDeleteRetentionInDays": 90,
+                "enableRbacAuthorization": false
+            }
+        }
+    ],
+    "outputs": {}
+}
+
+

@@ -63,7 +63,7 @@ function Write-Log {
 function Get-ScriptLineNumber { return $MyInvocation.ScriptLineNumber }
 new-item alias:__LINE__ -value Get-ScriptLineNumber
 
-$filePath = './difenda-mdrProvisioning-' + $company + $(Get-Date -Format "dddd-MM-dd-yyyy-HH_mm") + '.log'
+$filePath = './difenda-mdrProvisioning-' + $company + "-" + $(Get-Date -Format "dddd-MM-dd-yyyy-HH_mm") + '.log'
 $scope = '/subscriptions/' + $subscription + '/resourceGroups/' + $rg
 $startDate = Get-Date
 $endDate = $startDate.AddYears(5)
@@ -321,7 +321,7 @@ if ($null -eq $azContext.Account.Id) {
 Write-Log -Sev 1 -Line $(__LINE__) -Msg "Tenant Id:              ", $azContext.Subscription.TenantId
 Write-Log -Sev 1 -Line $(__LINE__) -Msg "Subscription name:      ", $azContext.Subscription.Name
 Write-Log -Sev 1 -Line $(__LINE__) -Msg "Subscription Id:        ", $azContext.Subscription.Id
-Write-Log -Sev 1 -Line $(__LINE__) -Msg "Subscription name:      ", $azContext.Account.Id
+Write-Log -Sev 1 -Line $(__LINE__) -Msg "Azure account:          ", $azContext.Account.Id
 
 $subscriptionScope = "/subscriptions/$subscription"
 $currentRoleAssignment = Get-AzRoleAssignment -ObjectId $currentUserDetails.Id -Scope $subscriptionScope
@@ -842,9 +842,9 @@ if ($null -eq $currentGroup) {
     $groupId = $newGroup.Id
     Start-Sleep -Seconds 30
     Write-Log -Sev 1 -Line (__LINE__) -Msg "Azure AD security group successfully created -> "
-    Write-Log -Sev 1 -Line (__LINE__) -Msg $newGroup.DisplayName
-    Write-Log -Sev 1 -Line (__LINE__) -Msg $newGroup.Id
-    Write-Log -Sev 1 -Line (__LINE__) -Msg $newGroup.Description
+    Write-Log -Sev 1 -Line (__LINE__) -Msg "   ->", $newGroup.DisplayName
+    Write-Log -Sev 1 -Line (__LINE__) -Msg "   ->", $newGroup.Id
+    Write-Log -Sev 1 -Line (__LINE__) -Msg "   ->", $newGroup.Description
 }
 else {
     Write-Log -Sev 2 -Line (__LINE__) -Msg "Azure AD security group", $group, "already exists"

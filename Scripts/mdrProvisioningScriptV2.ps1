@@ -322,6 +322,7 @@ Write-Log -Sev 1 -Line $(__LINE__) -Msg "Tenant Id:              ", $azContext.S
 Write-Log -Sev 1 -Line $(__LINE__) -Msg "Subscription name:      ", $azContext.Subscription.Name
 Write-Log -Sev 1 -Line $(__LINE__) -Msg "Subscription Id:        ", $azContext.Subscription.Id
 Write-Log -Sev 1 -Line $(__LINE__) -Msg "Azure account:          ", $azContext.Account.Id
+Write-Log -Sev 1 -Line $(__LINE__) -Msg "Azure region:           ", $location
 
 $subscriptionScope = "/subscriptions/$subscription"
 $currentRoleAssignment = Get-AzRoleAssignment -ObjectId $currentUserDetails.Id -Scope $subscriptionScope

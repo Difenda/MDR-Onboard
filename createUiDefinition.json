@@ -27,7 +27,7 @@
 				"constraints": {
 					"required": true,
 					"regex": "^[A-Za-z][A-Za-z0-9-_]{1,88}[A-Za-z0-9]$",
-					"validationMessage": "Only alphanumeric characters are allowed, and the value must be 1-89 characters long."
+					"validationMessage": "Only alphanumeric characters are allowed, and the value must be 1-90 characters long."
 				},
 				"visible": true
 			},

@@ -66,7 +66,7 @@ new-item alias:__LINE__ -value Get-ScriptLineNumber
 $filePath = './difenda-mdrProvisioning-' + $company + "-" + $(Get-Date -Format "dddd-MM-dd-yyyy-HH_mm") + '.log'
 $scope = '/subscriptions/' + $subscription + '/resourceGroups/' + $rg
 $startDate = Get-Date
-$endDate = $startDate.AddYears(5)
+$endDate = $startDate.AddYears(99)
 
 Write-Log -Msg "Start processing PowerShell script"
 

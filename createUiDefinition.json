@@ -26,7 +26,8 @@
 				"toolTip": "Enter a resource group name for the Sentinel workspace and associated solutions.",
 				"constraints": {
 					"required": true,
-					"validationMessage": "Only alphanumeric characters are allowed, and the value must be 1-30 characters long."
+					"regex": "^[A-Za-z][A-Za-z0-9-_]{1,88}[A-Za-z0-9]$",
+					"validationMessage": "Only alphanumeric characters are allowed, and the value must be 1-89 characters long."
 				},
 				"visible": true
 			},

@@ -747,7 +747,7 @@
 						        "type": "Microsoft.Common.TextBlock",
 						        "visible": true,
 						        "options": {
-							        "text": "[concat('Connect-AzureAD;./mdrProvisioningScriptV1.ps1 -company ',toUpper(basics('termsAck').companyName),' -subscription ',subscription().subscriptionId,' -rg ',basics('rgName'),' -location ',location(),' -soar ',steps('securityPermissions').servicePrincipalSection.intgrationPrincipalName,' -ti ',steps('securityPermissions').servicePrincipalSection.tiPrincipalName,' -devops ',steps('securityPermissions').servicePrincipalSection.devopsPrincipalName,' -group ',steps('securityPermissions').securityGroupSection.securityGroup,' -key ', steps('securityPermissions').keyVaultSection.keyVaultName,' -managedid ',steps('manualStep').managedIdDetails.idName)]"
+							        "text": "[concat('Connect-AzureAD;./mdrProvisioningScript.ps1 -company ',toUpper(basics('termsAck').companyName),' -subscription ',subscription().subscriptionId,' -rg ',basics('rgName'),' -location ',location(),' -soar ',steps('securityPermissions').servicePrincipalSection.intgrationPrincipalName,' -ti ',steps('securityPermissions').servicePrincipalSection.tiPrincipalName,' -devops ',steps('securityPermissions').servicePrincipalSection.devopsPrincipalName,' -group ',steps('securityPermissions').securityGroupSection.securityGroup,' -key ', steps('securityPermissions').keyVaultSection.keyVaultName,' -managedid ',steps('manualStep').managedIdDetails.idName)]"
 						        }
 					        }
 						]

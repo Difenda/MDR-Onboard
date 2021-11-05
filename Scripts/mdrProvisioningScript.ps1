@@ -347,7 +347,7 @@ Write-Log -Sev 1 -Line $(__LINE__) -Msg "Obtaining existing management partner i
 try { $partner = Get-AzManagementPartner -ErrorAction Stop}
 catch {
     if ($_) {
-        Write-Log -Sev 3 -Line $(__LINE__) -Msg "Error while obtaining management partner information"
+        Write-Log -Sev 2 -Line $(__LINE__) -Msg "Error while obtaining management partner information"
     }
 }
 if ($partner) {
@@ -472,6 +472,63 @@ catch {
 
 if ($roleAssigned) {
     Write-Log -Sev 1 -Line (__LINE__) -Msg "Azure AD role", $azureAdRole.ObjectId ,"successfully assigned to user provided managed identity"
+}
+
+##########################################################################
+#
+# ManagedService provider validation/registration
+#
+##########################################################################
+Write-Log -Msg "ManagedService provider validation/registration"
+Write-Log -Sev 1 -Line (__LINE__) -Msg "Validating if ManagedService provider is registered. If not, will try to register."
+$azResourceProvider = Get-AzResourceProvider -ProviderNameSpace Microsoft.ManagedServices
+$providersCount = $azResourceProvider.Count - 1
+$register = $false
+
+foreach ($i in 0..$providersCount) {
+    $resourceType1 = $azResourceProvider[$i].ResourceTypes.ResourceTypeName
+    $registrationState1 = $azResourceProvider[$i].RegistrationState
+    Write-Log -Sev 1 -Line (__LINE__) -Msg "Provider Namespace:", $resourceType1, " (", $registrationState1, ")"
+    if ($registrationState1 -eq "NotRegistered" -or $registrationState1 -eq "Unregistered") {
+        $register = $true
+    }
+}
+if ($register) {
+    Write-Log -Sev 1 -Line (__LINE__) -Msg "Azure provide ManagedServices is not registered. Will try to register ..."
+    try { $registrationResult = Register-AzResourceProvider -ProviderNamespace Microsoft.ManagedServices -ErrorAction Stop }
+    catch {
+        $ErrorMessage = $_.ErrorDetails.Message
+        Write-Log -Sev 3 -Line (__LINE__) -Msg "Something went wrong.", $registrationResult, $ErrorMessage
+        break
+    }
+
+    Write-Log -Msg "Registering Provider NameSpace Microsoft.ManagedServices."
+
+    Start-Sleep -Seconds 5
+    $azResourceProvider2 = Get-AzResourceProvider -ProviderNameSpace Microsoft.ManagedServices
+
+    foreach ($i in 0..$providersCount) {
+        $registrationState2 = $azResourceProvider2[$i].RegistrationState
+        if ($registrationState2 -eq "Registering") {
+            Write-Log -Sev 1 -Line (__LINE__) -Msg "Registration in process. Pausing for 5 seconds to validate again."
+            $azResourceProvider2 = Get-AzResourceProvider -ProviderNameSpace Microsoft.ManagedServices
+            Start-Sleep -Seconds 5
+            $foreach.Reset()
+        }
+    }
+
+    Write-Log -Msg "Registration complete."
+    $azResourceProvider3 = Get-AzResourceProvider -ProviderNameSpace Microsoft.ManagedServices
+
+    foreach ($i in 0..$providersCount) {
+        $resourceType3 = $azResourceProvider3[$i].ResourceTypes.ResourceTypeName
+        $registrationState3 = $azResourceProvider3[$i].RegistrationState
+        Write-Log -Sev 1 -Line (__LINE__) -Msg "Provider Namespace:", $resourceType3, " (", $registrationState3, ")"
+    }
+
+}
+else {
+    Write-Log -Msg "Azure provide ManagedServices already registered."
 }
 
 #########################################################################

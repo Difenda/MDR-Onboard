@@ -347,7 +347,7 @@ Write-Log -Sev 1 -Line $(__LINE__) -Msg "Obtaining existing management partner i
 try { $partner = Get-AzManagementPartner -ErrorAction Stop}
 catch {
     if ($_) {
-        Write-Log -Sev 2 -Line $(__LINE__) -Msg "Error while obtaining management partner information"
+        Write-Log -Sev 2 -Line $(__LINE__) -Msg "No management partner information found"
     }
 }
 if ($partner) {

@@ -18,16 +18,27 @@
 		},
 		"basics": [
 			{
+				"type": "Microsoft.Common.TextBox",
+				"name": "companyName",
+				"label": "Company name:",
+				"toolTip": "Enter company name to be used by Difenda.",
+				"constraints": {
+					"required": true,
+					"regex": "^[a-zA-Z]{4,10}$",
+					"validationMessage": "Name not valid. Name must be 4-10 characters."
+				}
+			},
+			{
 				"name": "rgName",
 				"type": "Microsoft.Common.TextBox",
 				"label": "Resource Group Name for Sentinel objects",
 				"placeholder": "rg-mdr-CUSTOMERNAME",
-				"defaultValue": "",
+				"defaultValue": "[toUpper(basics('termsAck').companyName)]",
 				"toolTip": "Enter a resource group name for the Sentinel workspace and associated solutions. Please ensure this value is unique before creating the resource group and Azure resources.",
 				"constraints": {
 					"required": true,
 					"regex": "^[A-Za-z][A-Za-z0-9-_]{1,88}[A-Za-z0-9]$",
-					"validationMessage": "Only alphanumeric characters are allowed, and the value must be 1-90 characters long."
+					"validationMessage": "Only alphanumeric characters are allowed, and the value must be 3-90 characters long."
 				},
 				"visible": true
 			},
@@ -70,17 +81,6 @@
 						"constraints": {
 							"required": true,
 							"validationMessage": "Please acknowledge the terms and conditions."
-						}
-					},
-					{
-						"type": "Microsoft.Common.TextBox",
-						"name": "companyName",
-						"label": "Company name:",
-						"toolTip": "Enter company name to be used by Difenda.",
-						"constraints": {
-							"required": true,
-							"regex": "^[a-zA-Z]{4,10}$",
-							"validationMessage": "Name not valid. Name must be 4-10 characters."
 						}
 					}
 				],

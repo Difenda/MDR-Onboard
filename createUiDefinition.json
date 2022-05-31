@@ -19,9 +19,10 @@
 		"basics": [
 			{
 				"name": "rgInfo",
-				"type": "Microsoft.Common.TextBlock",
+				"type": "Microsoft.Common.InfoBox",
 				"visible": true,
 				"options": {
+					"style": "Info",
 					"text": "Enter a resource group name to be used. Please ensure this value is unique before creating the resource group and Azure resources. If an existing Sentinel workspace will be used for the MDR service, enter the Resource group name containing it."
 				}
 			},

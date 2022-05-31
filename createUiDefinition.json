@@ -18,22 +18,11 @@
 		},
 		"basics": [
 			{
-				"type": "Microsoft.Common.TextBox",
-				"name": "companyName",
-				"label": "Company name:",
-				"toolTip": "Enter company name to be used by Difenda.",
-				"constraints": {
-					"required": true,
-					"regex": "^[a-zA-Z]{4,10}$",
-					"validationMessage": "Name not valid. Name must be 4-10 characters."
-				}
-			},
-			{
 				"name": "rgName",
 				"type": "Microsoft.Common.TextBox",
 				"label": "Resource Group Name for Sentinel objects",
 				"placeholder": "rg-mdr-CUSTOMERNAME",
-				"defaultValue": "[toUpper(basics('termsAck').companyName)]",
+				"defaultValue": "",
 				"toolTip": "Enter a resource group name for the Sentinel workspace and associated solutions. Please ensure this value is unique before creating the resource group and Azure resources.",
 				"constraints": {
 					"required": true,
@@ -81,6 +70,17 @@
 						"constraints": {
 							"required": true,
 							"validationMessage": "Please acknowledge the terms and conditions."
+						}
+					},
+					{
+						"type": "Microsoft.Common.TextBox",
+						"name": "companyName",
+						"label": "Company name:",
+						"toolTip": "Enter company name to be used by Difenda.",
+						"constraints": {
+							"required": true,
+							"regex": "^[a-zA-Z]{4,10}$",
+							"validationMessage": "Name not valid. Name must be 4-10 characters."
 						}
 					}
 				],
@@ -142,7 +142,7 @@
 								"visible": "[empty(steps('sentinelWorkspace').existingWorkspaceSection.laWorkspaceSelector.name)]",
 								"options": {
 									"icon": "Info",
-									"text": "If an existing workspace is selected above, this field will be ignored."
+									"text": "If an existing workspace is selected above, this value will be ignored."
 								}
 							},
 							{

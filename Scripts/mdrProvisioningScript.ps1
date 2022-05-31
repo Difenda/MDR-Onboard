@@ -26,7 +26,7 @@ param (
     [Parameter(Mandatory=$true)]$soar,
     [Parameter(Mandatory=$true)]$ti,
     [Parameter(Mandatory=$true)]$devops,
-    [Parameter(Mandatory=$true)]$mdetvm,
+    [Parameter(Mandatory=$true)]$avm,
     [Parameter(Mandatory=$true)]$group,
     [Parameter(Mandatory=$true)]$key,
     [Parameter(Mandatory=$true)]$managedid
@@ -438,7 +438,7 @@ catch {
 
 if ($createManagedId) {
     Write-Log -Sev 1 -Line (__LINE__) -Msg "Creating user provided managed identity"
-    $midentity = New-AzUserAssignedIdentity -ResourceGroupName $rg -Name $managedid -ErrorAction SilentlyContinue
+    $midentity = New-AzUserAssignedIdentity -ResourceGroupName $rg -Name $managedid -Location $location -ErrorAction SilentlyContinue
     Start-Sleep -Seconds 30
     if ($midentity.Id) {
         Write-Log -Sev 1 -Line (__LINE__) -Msg "User provided managed identity created successfully"
@@ -877,7 +877,7 @@ Write-Log -Sev 1 -Line (__LINE__) -Msg "Secret value:          ", $aadDevopsSecr
 #
 ##########################################################################
 Write-Log -Msg "MDETVM integration service principal section"
-Write-Log -Sev 1 -Line (__LINE__) -Msg "Using service principal name:", $mdetvm
+Write-Log -Sev 1 -Line (__LINE__) -Msg "Using service principal name:", $avm
 Write-Log -Sev 1 -Line (__LINE__) -Msg "Creating permissions object for MDETVM service principal"
 
 # Required permissions in Microsoft Defender for Endpoint API (Microsoft Threat and Vulnerability Management to Difenda Shield integration)
@@ -894,12 +894,12 @@ $tvm.ResourceAppId = 'fc780465-2017-40d4-a0c5-307022471b92'
 $tvm.ResourceAccess = $tvmPermission1, $tvmPermission2, $tvmPermission3, $tvmPermission4
 
 Write-Log -Sev 1 -Line (__LINE__) -Msg "Validating if service principal exists"
-$currentMdeTvm = Get-AzureADApplication -All $true -ErrorAction SilentlyContinue | ? { $_.DisplayName -eq $mdetvm }
+$currentMdeTvm = Get-AzureADApplication -All $true -ErrorAction SilentlyContinue | ? { $_.DisplayName -eq $avm }
 
 if ($null -eq $currentMdeTvm) {
     Write-Log -Sev 1 -Line (__LINE__) -Msg "Creating MDETVM integration service principal"
     try {
-        $newMdeTvm = New-AzADServicePrincipal -Scope /subscriptions/$subscription/resourceGroups/$rg -DisplayName $mdetvm -Role Reader -ErrorAction SilentlyContinue
+        $newMdeTvm = New-AzADServicePrincipal -Scope /subscriptions/$subscription/resourceGroups/$rg -DisplayName $avm -Role Reader -ErrorAction SilentlyContinue
     }
     catch {
         $ErrorMessage = $_.Exception.Message
@@ -909,7 +909,7 @@ if ($null -eq $currentMdeTvm) {
     }
 }
 else {
-    Write-Log -Sev 2 -Line (__LINE__) -Msg "Service principal", $mdetvm, "was found in the tenant"
+    Write-Log -Sev 2 -Line (__LINE__) -Msg "Service principal", $avm, "was found in the tenant"
     $confirmation = Read-Host "Do you want to use this service principal? [y/n]"
     while($confirmation -ne "y") {
         if ($confirmation -eq 'n') { Exit }
@@ -923,7 +923,7 @@ if ($null -ne $newMdeTvm) {
     Write-Log -Sev 1 -Line (__LINE__) -Msg "MDETVM integration service principal successfully created"
     Write-Log -Sev 1 -Line (__LINE__) -Msg "Obtaining details for MDETVM service principal"
     Write-Log -Sev 1 -Line (__LINE__) -Msg "Assigning API permissions"
-    $newMdeTvmDetails = Get-AzureADApplication -All $true | ? { $_.DisplayName -eq $mdetvm }
+    $newMdeTvmDetails = Get-AzureADApplication -All $true | ? { $_.DisplayName -eq $avm }
     try {
 		Set-AzureADApplication -ObjectId $newMdeTvmDetails.ObjectId -RequiredResourceAccess $tvm
     }
@@ -964,7 +964,7 @@ catch {
 }
 
 Write-Log -Msg "MDETVM service principal details"
-Write-Log -Sev 1 -Line (__LINE__) -Msg "Service principal name: ", $mdetvm
+Write-Log -Sev 1 -Line (__LINE__) -Msg "Service principal name: ", $avm
 Write-Log -Sev 1 -Line (__LINE__) -Msg "Object Id:              ", $newMdeTvmDetails.ObjectId
 Write-Log -Sev 1 -Line (__LINE__) -Msg "Application Id:         ", $newMdeTvmDetails.AppId
 Write-Log -Sev 1 -Line (__LINE__) -Msg "Tenant Id:              ", $(Get-AzContext).Tenant.Id

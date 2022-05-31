@@ -341,6 +341,20 @@
 								"visible": true
 							},
 							{
+								"name": "avmPrincipalName",
+								"type": "Microsoft.Common.TextBox",
+								"label": "AVM Service Principal name",
+								"placeholder": "",
+								"defaultValue": "mdr-prod-avm-sp",
+								"toolTip": "Enter the Service Principal name the AVM service",
+								"constraints": {
+									"required": false,
+									"regex": "(^[A-Za-z0-9][A-Za-z0-9-]{2,62}[A-Za-z0-9]$)",
+									"validationMessage": "Only alphanumeric characters are allowed, and the value must be 1-30 characters long."
+								},
+								"visible": true
+							},
+							{
 								"name": "devopsPrincipalName",
 								"type": "Microsoft.Common.TextBox",
 								"label": "DevOps Service Principal name",
@@ -774,7 +788,7 @@
 						        "type": "Microsoft.Common.TextBlock",
 						        "visible": true,
 						        "options": {
-							        "text": "[concat('Connect-AzureAD;./mdrProvisioningScript.ps1 -company ',toUpper(basics('termsAck').companyName),' -subscription ',subscription().subscriptionId,' -rg ',basics('rgName'),' -location ',location(),' -soar ',steps('securityPermissions').servicePrincipalSection.intgrationPrincipalName,' -ti ',steps('securityPermissions').servicePrincipalSection.tiPrincipalName,' -devops ',steps('securityPermissions').servicePrincipalSection.devopsPrincipalName,' -group ',steps('securityPermissions').securityGroupSection.securityGroup,' -key ', steps('securityPermissions').keyVaultSection.keyVaultName,' -managedid ',steps('manualStep').managedIdDetails.idName)]"
+							        "text": "[concat('Connect-AzureAD;./mdrProvisioningScript.ps1 -company ',toUpper(basics('termsAck').companyName),' -subscription ',subscription().subscriptionId,' -rg ',basics('rgName'),' -location ',location(),' -soar ',steps('securityPermissions').servicePrincipalSection.intgrationPrincipalName,' -ti ',steps('securityPermissions').servicePrincipalSection.tiPrincipalName, ' -avm', steps('securityPermissions').servicePrincipalSection.avmPrincipalName, ' -devops ',steps('securityPermissions').servicePrincipalSection.devopsPrincipalName,' -group ',steps('securityPermissions').securityGroupSection.securityGroup,' -key ', steps('securityPermissions').keyVaultSection.keyVaultName,' -managedid ',steps('manualStep').managedIdDetails.idName)]"
 						        }
 					        }
 						]

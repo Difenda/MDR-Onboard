@@ -22,8 +22,8 @@
 				"type": "Microsoft.Common.InfoBox",
 				"visible": true,
 				"options": {
-					"style": "Info",
-					"text": "Enter a resource group name to be used. Please ensure this value is unique before creating the resource group and Azure resources. If an existing Sentinel workspace will be used for the MDR service, enter the Resource group name containing it."
+					"text": "Enter a resource group name to be used. Please ensure this value is unique before creating the resource group and Azure resources. If an existing Sentinel workspace will be used for the MDR service, enter the Resource group name containing it.",
+					"style": "Info"
 				}
 			},
 			{
@@ -39,6 +39,15 @@
 					"validationMessage": "Only alphanumeric characters are allowed, and the value must be 3-90 characters long."
 				},
 				"visible": true
+			},
+			{
+				"name": "rgWarning1",
+				"type": "Microsoft.Common.InfoBox",
+				"visible": true,
+				"options": {
+					"text": "Resource group and Sentinel workspace names must be unique to prevent operational conflicts. Do not proceed if unsure and contact a Difenda engineer.",
+					"style": "Warning"
+				}
 			},
 			{
 				"name": "termsAck",
@@ -167,6 +176,15 @@
 									"validationMessage": "Only alphanumeric characters and '-' are allowed, and the value must be 1-30 characters long. First and last characters must be alphanumeric."
 								},
 								"visible": "[empty(steps('sentinelWorkspace').existingWorkspaceSection.laWorkspaceSelector.name)]"
+							},
+							{
+								"name": "rgWarning2",
+								"type": "Microsoft.Common.InfoBox",
+								"visible": true,
+								"options": {
+									"text": "Resource group and Sentinel workspace names must be unique to prevent operational conflicts. Do not proceed if unsure and contact a Difenda engineer.",
+									"style": "Warning"
+								}
 							}
 						],
 						"visible": "[empty(steps('sentinelWorkspace').existingWorkspaceSection.laWorkspaceSelector.name)]"

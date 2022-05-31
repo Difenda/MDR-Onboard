@@ -21,9 +21,9 @@
 				"name": "rgName",
 				"type": "Microsoft.Common.TextBox",
 				"label": "Resource Group Name for Sentinel objects",
-				"placeholder": "",
-				"defaultValue": "mdr-prod-rg",
-				"toolTip": "Enter a resource group name for the Sentinel workspace and associated solutions.",
+				"placeholder": "rg-mdr-CUSTOMERNAME",
+				"defaultValue": "",
+				"toolTip": "Enter a resource group name for the Sentinel workspace and associated solutions. Please ensure this value is unique before creating the resource group and Azure resources.",
 				"constraints": {
 					"required": true,
 					"regex": "^[A-Za-z][A-Za-z0-9-_]{1,88}[A-Za-z0-9]$",
@@ -257,7 +257,7 @@
 								"name": "keyVaultName",
 								"type": "Microsoft.Common.TextBox",
 								"label": "Key vault name",
-								"defaultValue": "[concat('kv-mdr-prod-', toUpper(basics('termsAck').companyName))]",
+								"defaultValue": "[concat('kv-mdr-', toUpper(basics('termsAck').companyName))]",
 								"toolTip": "Please enter a valid Key vault name. Key vault names are limited to 24 characters long and can contain alphanumeric and '-' only.",
 								"constraints": {
 									"required": true,

@@ -26,6 +26,7 @@ param (
     [Parameter(Mandatory=$true)]$soar,
     [Parameter(Mandatory=$true)]$ti,
     [Parameter(Mandatory=$true)]$devops,
+    [Parameter(Mandatory=$true)]$mdetvm,
     [Parameter(Mandatory=$true)]$group,
     [Parameter(Mandatory=$true)]$key,
     [Parameter(Mandatory=$true)]$managedid
@@ -868,6 +869,111 @@ Write-Log -Sev 1 -Line (__LINE__) -Msg "Subscription name:     ", $azContext.Sub
 Write-Log -Sev 1 -Line (__LINE__) -Msg "Secret start date:     ", $aadDevopsSecret.StartDate
 Write-Log -Sev 1 -Line (__LINE__) -Msg "Secret end date:       ", $aadDevopsSecret.EndDate
 Write-Log -Sev 1 -Line (__LINE__) -Msg "Secret value:          ", $aadDevopsSecret.Value
+
+
+#########################################################################
+#
+# MDETVM integration service principal section
+#
+##########################################################################
+Write-Log -Msg "MDETVM integration service principal section"
+Write-Log -Sev 1 -Line (__LINE__) -Msg "Using service principal name:", $mdetvm
+Write-Log -Sev 1 -Line (__LINE__) -Msg "Creating permissions object for MDETVM service principal"
+
+# Required permissions in Microsoft Defender for Endpoint API (Microsoft Threat and Vulnerability Management to Difenda Shield integration)
+Write-Log -Sev 1 -Line (__LINE__) -Msg "Building permissions object for MDE API"
+$tvmPermission1 = New-Object -TypeName "Microsoft.Open.AzureAD.Model.ResourceAccess" -ArgumentList "ea8291d3-4b9a-44b5-bc3a-6cea3026dc79","Role"
+$tvmPermission2 = New-Object -TypeName "Microsoft.Open.AzureAD.Model.ResourceAccess" -ArgumentList "41269fc5-d04d-4bfd-bce7-43a51cea049a","Role"
+$tvmPermission3 = New-Object -TypeName "Microsoft.Open.AzureAD.Model.ResourceAccess" -ArgumentList "37f71c98-d198-41ae-964d-2c49aab74926","Role"
+$tvmPermission4 = New-Object -TypeName "Microsoft.Open.AzureAD.Model.ResourceAccess" -ArgumentList "6443965c-7dd2-4cfd-b38f-bb7772bee163","Role"
+
+# Building the object with the set of permissions for MDE
+Write-Log -Sev 1 -Line (__LINE__) -Msg "Creating MDE permissions assignment"
+$tvm = New-Object -TypeName "Microsoft.Open.AzureAD.Model.RequiredResourceAccess"
+$tvm.ResourceAppId = 'fc780465-2017-40d4-a0c5-307022471b92'
+$tvm.ResourceAccess = $tvmPermission1, $tvmPermission2, $tvmPermission3, $tvmPermission4
+
+Write-Log -Sev 1 -Line (__LINE__) -Msg "Validating if service principal exists"
+$currentMdeTvm = Get-AzureADApplication -All $true -ErrorAction SilentlyContinue | ? { $_.DisplayName -eq $mdetvm }
+
+if ($null -eq $currentMdeTvm) {
+    Write-Log -Sev 1 -Line (__LINE__) -Msg "Creating MDETVM integration service principal"
+    try {
+        $newMdeTvm = New-AzADServicePrincipal -Scope /subscriptions/$subscription/resourceGroups/$rg -DisplayName $mdetvm -Role Reader -ErrorAction SilentlyContinue
+    }
+    catch {
+        $ErrorMessage = $_.Exception.Message
+        Write-Log -Sev 3 -Line (__LINE__) -Msg "Failed creating MDETVM integration service principal"
+        Write-Log -Sev 3 -Line (__LINE__) -Msg $ErrorMessage
+        Exit
+    }
+}
+else {
+    Write-Log -Sev 2 -Line (__LINE__) -Msg "Service principal", $mdetvm, "was found in the tenant"
+    $confirmation = Read-Host "Do you want to use this service principal? [y/n]"
+    while($confirmation -ne "y") {
+        if ($confirmation -eq 'n') { Exit }
+        $confirmation = Read-Host "Do you want to use this service principal? [y/n]"
+    }
+    $newMdeTvm = $currentMdeTvm
+}
+
+if ($null -ne $newMdeTvm) {
+    Start-Sleep -Seconds 30
+    Write-Log -Sev 1 -Line (__LINE__) -Msg "MDETVM integration service principal successfully created"
+    Write-Log -Sev 1 -Line (__LINE__) -Msg "Obtaining details for MDETVM service principal"
+    Write-Log -Sev 1 -Line (__LINE__) -Msg "Assigning API permissions"
+    $newMdeTvmDetails = Get-AzureADApplication -All $true | ? { $_.DisplayName -eq $mdetvm }
+    try {
+		Set-AzureADApplication -ObjectId $newMdeTvmDetails.ObjectId -RequiredResourceAccess $tvm
+    }
+    catch {
+        $ErrorMessage = $_.Exception.Message
+        Write-Log -Sev 3 -Line (__LINE__) -Msg "Failed assigning API permissions to MDETVM service principal"
+        Write-Log -Sev 3 -Line (__LINE__) -Msg $ErrorMessage
+        Exit
+    }
+    Write-Log -Sev 1 -Line (__LINE__) -Msg "API permissions assigned successfully"
+}
+else {
+    Write-Log -Sev 3 -Line (__LINE__) -Msg "Failed creating MDETVM integration service principal"
+}
+
+Write-Log -Sev 1 -Line (__LINE__) -Msg "Creating secret for MDETVM service principal"
+try {
+    $aadMdeTvmSecret = New-AzureADApplicationPasswordCredential -ObjectId $newMdeTvmDetails.ObjectId -CustomKeyIdentifier "TVM Integration" -StartDate $startDate -EndDate $endDate
+}
+catch {
+    
+    $ErrorMessage = $_.Exception.Message
+    Write-Log -Sev 3 -Line (__LINE__) -Msg "Failed creating secret for MDETVM integration service principal"
+    Write-Log -Sev 3 -Line (__LINE__) -Msg $ErrorMessage
+    Exit
+}
+
+Write-Log -Sev 1 -Line (__LINE__) -Msg "Saving MDETVM secret in the key vault"
+try {
+    $mdetvmSecretvalue = ConvertTo-SecureString $aadMdeTvmSecret.Value -AsPlainText -Force
+    $secret = Set-AzKeyVaultSecret -VaultName $key -Name 'MdeTvmSecret' -SecretValue $mdetvmSecretvalue
+}
+catch {
+    $ErrorMessage = $_.Exception.Message
+    Write-Log -Sev 3 -Line (__LINE__) -Msg "Failed saving secret for MDETVM integration service principal in the keyvault"
+    Write-Log -Sev 3 -Line (__LINE__) -Msg $ErrorMessage
+    Exit
+}
+
+Write-Log -Msg "MDETVM service principal details"
+Write-Log -Sev 1 -Line (__LINE__) -Msg "Service principal name: ", $mdetvm
+Write-Log -Sev 1 -Line (__LINE__) -Msg "Object Id:              ", $newMdeTvmDetails.ObjectId
+Write-Log -Sev 1 -Line (__LINE__) -Msg "Application Id:         ", $newMdeTvmDetails.AppId
+Write-Log -Sev 1 -Line (__LINE__) -Msg "Tenant Id:              ", $(Get-AzContext).Tenant.Id
+Write-Log -Sev 1 -Line (__LINE__) -Msg "Subscription Id:        ", $azContext.Subscription.Id
+Write-Log -Sev 1 -Line (__LINE__) -Msg "Subscription name:      ", $azContext.Subscription.Name
+Write-Log -Sev 1 -Line (__LINE__) -Msg "Secret start date:      ", $aadMdeTvmSecret.StartDate
+Write-Log -Sev 1 -Line (__LINE__) -Msg "Secret end date:        ", $aadMdeTvmSecret.EndDate
+Write-Log -Sev 1 -Line (__LINE__) -Msg "Secret value:           ", $aadMdeTvmSecret.Value
+
 
 #########################################################################
 #

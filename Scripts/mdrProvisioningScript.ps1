@@ -406,6 +406,62 @@ else {
     Write-Log -Sev 2 -Line (__LINE__) -Msg "Resource group", $currentRg.ResourceGroupName, "already exists and will be used"
 }
 
+##########################################################################
+#
+# ManagedIdentity validation/registration
+#
+##########################################################################
+Write-Log -Msg "ManagedIdentity provider validation/registration"
+Write-Log -Sev 1 -Line (__LINE__) -Msg "Validating if ManagedIdentity provider is registered. If not, will try to register."
+$azResourceProvider = Get-AzResourceProvider -ProviderNameSpace Microsoft.ManagedIdentity
+$providersCount = $azResourceProvider.Count - 1
+$register = $false
+
+foreach ($i in 0..$providersCount) {
+    $resourceType1 = $azResourceProvider[$i].ResourceTypes.ResourceTypeName
+    $registrationState1 = $azResourceProvider[$i].RegistrationState
+    Write-Log -Sev 1 -Line (__LINE__) -Msg "Provider Namespace:", $resourceType1, " (", $registrationState1, ")"
+    if ($registrationState1 -eq "NotRegistered" -or $registrationState1 -eq "Unregistered") {
+        $register = $true
+    }
+}
+if ($register) {
+    Write-Log -Sev 1 -Line (__LINE__) -Msg "Azure provide ManagedIdentity is not registered. Will try to register ..."
+    try { $registrationResult = Register-AzResourceProvider -ProviderNamespace Microsoft.ManagedIdentity -ErrorAction Stop }
+    catch {
+        $ErrorMessage = $_.ErrorDetails.Message
+        Write-Log -Sev 3 -Line (__LINE__) -Msg "Something went wrong.", $registrationResult, $ErrorMessage
+        break
+    }
+
+    Write-Log -Msg "Registering Provider NameSpace Microsoft.ManagedIdentity."
+
+    Start-Sleep -Seconds 5
+    $azResourceProvider2 = Get-AzResourceProvider -ProviderNameSpace Microsoft.ManagedIdentity
+
+    foreach ($i in 0..$providersCount) {
+        $registrationState2 = $azResourceProvider2[$i].RegistrationState
+        if ($registrationState2 -eq "Registering") {
+            Write-Log -Sev 1 -Line (__LINE__) -Msg "Registration in process. Pausing for 5 seconds to validate again."
+            $azResourceProvider2 = Get-AzResourceProvider -ProviderNameSpace Microsoft.ManagedIdentity
+            Start-Sleep -Seconds 5
+            $foreach.Reset()
+        }
+    }
+
+    Write-Log -Msg "Registration complete."
+    $azResourceProvider3 = Get-AzResourceProvider -ProviderNameSpace Microsoft.ManagedIdentity
+
+    foreach ($i in 0..$providersCount) {
+        $resourceType3 = $azResourceProvider3[$i].ResourceTypes.ResourceTypeName
+        $registrationState3 = $azResourceProvider3[$i].RegistrationState
+        Write-Log -Sev 1 -Line (__LINE__) -Msg "Provider Namespace:", $resourceType3, " (", $registrationState3, ")"
+    }
+
+}
+else {
+    Write-Log -Msg "Azure provide ManagedIdentity already registered."
+}
 
 #########################################################################
 #
@@ -455,6 +511,7 @@ $roleAssigned = $true
 $azureAdRole = Get-AzureADDirectoryRole | ? { $_.DisplayName -eq "Global Administrator" }
 
 Write-Log -Sev 1 -Line (__LINE__) -Msg "Assigning Azure AD role", $azureAdRole.ObjectId ,"to user provided managed identity"
+Start-Sleep -Seconds 30
 try {
     Add-AzureADDirectoryRoleMember -ObjectId $azureAdRole.ObjectId -RefObjectId $midentity.PrincipalId -ErrorAction Stop
 }
@@ -597,6 +654,8 @@ $atpPermission4 = New-Object -TypeName "Microsoft.Open.AzureAD.Model.ResourceAcc
 Write-Log -Sev 1 -Line (__LINE__) -Msg "Building permissions object for MS Graph API"
 $mgPermission1 = New-Object -TypeName "Microsoft.Open.AzureAD.Model.ResourceAccess" -ArgumentList "741f803b-c850-494e-b5df-cde7c675a1ca","Role"
 $mgPermission2 = New-Object -TypeName "Microsoft.Open.AzureAD.Model.ResourceAccess" -ArgumentList "bf394140-e372-4bf9-a898-299cfc7564e5","Role"
+$mgPermission3 = New-Object -TypeName "Microsoft.Open.AzureAD.Model.ResourceAccess" -ArgumentList "c529cfca-c91b-489c-af2b-d92990b66ce6","Role"
+$mgPermission4 = New-Object -TypeName "Microsoft.Open.AzureAD.Model.ResourceAccess" -ArgumentList "19dbc75e-c2e2-444c-a770-ec69d8559fc7","Role"
 
 # Building the object with the set of permissions for MDE
 Write-Log -Sev 1 -Line (__LINE__) -Msg "Creating MDE permissions assignment"
@@ -608,7 +667,7 @@ $atp.ResourceAccess = $atpPermission1, $atpPermission2, $atpPermission3, $atpPer
 Write-Log -Sev 1 -Line (__LINE__) -Msg "Creating MS Graph permissions assignment"
 $mg = New-Object -TypeName "Microsoft.Open.AzureAD.Model.RequiredResourceAccess"
 $mg.ResourceAppId = '00000003-0000-0000-c000-000000000000'
-$mg.ResourceAccess = $mgPermission1, $mgPermission2
+$mg.ResourceAccess = $mgPermission1, $mgPermission2, $mgPermission3, $mgPermission4
 
 Write-Log -Sev 1 -Line (__LINE__) -Msg "Validating if service principal exists"
 $currentSoar = Get-AzureADApplication -All $true -ErrorAction SilentlyContinue | ? { $_.DisplayName -eq $soar }
@@ -680,6 +739,27 @@ catch {
     Exit
 }
 
+###########
+#Write-Log -Sev 1 -Line (__LINE__) -Msg "Assigning Password administrator role to Service principal"
+
+#$pwdAdminRole = Get-AzureADDirectoryRole | ? { $_.DisplayName -eq "Password administrator" }
+
+#if ($null -ne $pwdAdminRole) {
+#    Write-Log -Sev 1 -Line (__LINE__) -Msg "Retrieving Enterprise Application Object ID"
+#    $soarEntApp = Get-AzureADServicePrincipal -All $true | ? { $_.DisplayName -eq $soar }
+
+#    if ($null -ne $soarEntApp) {
+#        Write-Log -Sev 1 -Line (__LINE__) -Msg "Assigning Azure AD role to EA"
+#        try {
+#            Add-AzureADDirectoryRoleMember -ObjectId $pwdAdminRole.ObjectId -RefObjectId $soarEntApp.ObjectId
+#        }
+#        catch {
+
+#        }
+        
+#    }
+#}
+###############
 
 Write-Log -Msg "SOAR service principal details"
 Write-Log -Sev 1 -Line (__LINE__) -Msg "Service principal name: ", $soar

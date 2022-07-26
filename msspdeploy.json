@@ -62,11 +62,6 @@
                 },
                 {
                     "principalId": "[parameters('contributorGroupId')]",
-                    "roleDefinitionId": "749f88d5-cbae-40b8-bcfc-e573ddc772fa",
-                    "principalIdDisplayName": "Difenda C3-Platform - Monitoring Contributor"
-                },
-                {
-                    "principalId": "[parameters('contributorGroupId')]",
                     "roleDefinitionId": "92aaf0da-9dab-42b6-94a3-d43ce8d16293",
                     "principalIdDisplayName": "Difenda C3-Platform - Log Analytics Contributor"
                 },

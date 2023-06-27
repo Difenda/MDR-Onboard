@@ -1,5 +1,3 @@
-[[_TOC_]]
-
 
 
 # **1 Changes in Microsoft Sentinel**

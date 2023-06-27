@@ -1104,7 +1104,7 @@ Write-Host
 Write-Host '**********************************************************************************************'
 Write-Host
 Write-Host "Grant admin consent for the triage service principal $triage in Azure AD"
-Write-Host 'https://www.microsoft.com'
+Write-Host 'https://learn.microsoft.com/en-us/azure/active-directory/manage-apps/grant-admin-consent?pivots=portal'
 Write-Host
 $confirmationTriageConsent = Read-Host "Please confirm Admin consent has been granted for Triage service principal $triage [Y/N]"
 while($confirmationTriageConsent -ne "y") {
@@ -1116,7 +1116,7 @@ if ($isavm) {
     Write-Host '**********************************************************************************************'
     Write-Host
     Write-Host "Grant admin consent for the AVM service principal $avm in Azure AD"
-    Write-Host 'https://www.microsoft.com'
+    Write-Host 'https://learn.microsoft.com/en-us/azure/active-directory/manage-apps/grant-admin-consent?pivots=portal'
     Write-Host
     $confirmationAvmConsent = Read-Host "Please confirm Admin consent has been granted for AVM principal $avm [Y/N]"
     while($confirmationAvmConsent -ne "y") {
@@ -1128,7 +1128,7 @@ if ($isavm) {
 Write-Host '**********************************************************************************************'
 Write-Host
 Write-Host 'Enable the Microsoft 365 Defender Sentinel Data connector. Follow instructions provided in the following link'
-Write-Host 'https://www.microsoft.com'
+Write-Host 'https://github.com/Difenda/MDR-Onboard/blob/main/Scripts/Shield2.0/shieldWiki.md#111-enable-microsoft-365-defender-data-connector'
 Write-Host
 $confirmationM365Dconnector = Read-Host "Please confirm when enabling the Microsoft 365 Defender Sentinel Data connector has been completed [Y/N]"
 while($confirmationM365Dconnector -ne "y") {
@@ -1139,7 +1139,7 @@ Write-Host
 Write-Host '**********************************************************************************************'
 Write-Host
 Write-Host 'Enable the Microsoft Defender for Cloud Sentinel Data connector. Follow instructions provided in the following link'
-Write-Host 'https://www.microsoft.com'
+Write-Host 'https://github.com/Difenda/MDR-Onboard/blob/main/Scripts/Shield2.0/shieldWiki.md#112-enable-defender-for-cloud-data-connector'
 Write-Host
 $confirmationMdcDconnector = Read-Host "Please confirm when enabling the Microsoft Defender for Cloud Sentinel Data connector has been completed [Y/N]"
 while($confirmationMdcDconnector -ne "y") {
@@ -1150,7 +1150,7 @@ Write-Host
 Write-Host '**********************************************************************************************'
 Write-Host
 Write-Host 'Review existing automation rules and remove any closing ALL Incidents. Follow instructions provided in the following link'
-Write-Host 'https://www.microsoft.com'
+Write-Host 'https://github.com/Difenda/MDR-Onboard/blob/main/Scripts/Shield2.0/shieldWiki.md#12-remove-any-automation-rule-closing-all-incidents'
 Write-Host
 $confirmationCloseAr = Read-Host "Please confirm when any Automation rules closing ALL Incidents have been removed [Y/N]"
 while($confirmationCloseAr -ne "y") {
@@ -1161,7 +1161,7 @@ Write-Host
 Write-Host '**********************************************************************************************'
 Write-Host
 Write-Host 'Authorize Sentinel to execute playbooks in the Integration resource group provided in the following link'
-Write-Host 'https://www.microsoft.com'
+Write-Host 'https://github.com/Difenda/MDR-Onboard/blob/main/Scripts/Shield2.0/shieldWiki.md#13-authorize-sentinel-to-execute-playbooks-in-the-new-resource-group'
 Write-Host
 $confirmationSentinelAuth = Read-Host "Please confirm when Microsoft Sentinel has been authorized to execute playbooks in the Integration resource group [Y/N]"
 while($confirmationSentinelAuth -ne "y") {
@@ -1170,7 +1170,17 @@ while($confirmationSentinelAuth -ne "y") {
 }
 Write-Host
 Write-Host '**********************************************************************************************'
-
+Write-Host
+Write-Host 'Configure Single sign-on for Difenda Shield access'
+Write-Host 'https://github.com/Difenda/MDR-Onboard/blob/main/Scripts/Shield2.0/shieldWiki.md#5-configure-single-sign-on-for-shield-access'
+Write-Host
+$confirmationSentinelAuth = Read-Host "Please confirm when Single sign-on has been configured and definition files shared with Difenda [Y/N]"
+while($confirmationSentinelAuth -ne "y") {
+    if ($confirmationSentinelAuth -eq 'n') { Exit }
+    $confirmationSentinelAuth = Read-Host "Please confirm when Single sign-on has been configured and definition files shared with Difenda [Y/N]"
+}
+Write-Host
+Write-Host '**********************************************************************************************'
 
 #####################################################
 #

@@ -275,47 +275,47 @@ while ($confirmationDevOpsSp -ne 'y') {
 }
 Write-Host
 
-############################################################################################################
-# Obtaining encryption Key
-############################################################################################################
-$myBase64key = $null
-$keyConfirmation = $null
-while ( $keyConfirmation -ne 'y' ) {
-    $myBase64key = Read-Host "Enter encryption key provided by Difenda "
-    while ($keyConfirmation -ne 'y' -and $keyConfirmation -ne 'n') {
-        $keyConfirmation = Read-Host 'Please confirm the key provided is correct [Y/N] '
-    }
-    if ($keyConfirmation -eq 'y') {
-        Write-Host "Using provided key."
-        # Write-Log -Sev 1 -Line (__LINE__) -Msg "Using provided key."
-    }
-    else {
-        $myBase64key = $null
-        $keyConfirmation = $null
-    }
-}
-Write-Host
+# ############################################################################################################
+# # Obtaining encryption Key
+# ############################################################################################################
+# $myBase64key = $null
+# $keyConfirmation = $null
+# while ( $keyConfirmation -ne 'y' ) {
+#     $myBase64key = Read-Host "Enter encryption key provided by Difenda "
+#     while ($keyConfirmation -ne 'y' -and $keyConfirmation -ne 'n') {
+#         $keyConfirmation = Read-Host 'Please confirm the key provided is correct [Y/N] '
+#     }
+#     if ($keyConfirmation -eq 'y') {
+#         Write-Host "Using provided key."
+#         # Write-Log -Sev 1 -Line (__LINE__) -Msg "Using provided key."
+#     }
+#     else {
+#         $myBase64key = $null
+#         $keyConfirmation = $null
+#     }
+# }
+# Write-Host
 
-############################################################################################################
-# C3 Engineer Email
-############################################################################################################
-$c3Email = $null
-$c3EmailConfirmation = $null
-while ( $c3EmailConfirmation -ne 'y' ) {
-    $c3Email = Read-Host "Enter the email address of your Difenda C3 Engineer "
-    while ($c3EmailConfirmation -ne 'y' -and $c3EmailConfirmation -ne 'n') {
-        $c3EmailConfirmation = Read-Host 'Please confirm the email provided is correct [Y/N] '
-    }
-    if ($c3EmailConfirmation -eq 'y') {
-        Write-Host "Using provided email address : $c3Email"
-        # Write-Log -Sev 1 -Line (__LINE__) -Msg "Using provided key."
-    }
-    else {
-        $c3Email = $null
-        $c3EmailConfirmation = $null
-    }
-}
-Write-Host
+# ############################################################################################################
+# # C3 Engineer Email
+# ############################################################################################################
+# $c3Email = $null
+# $c3EmailConfirmation = $null
+# while ( $c3EmailConfirmation -ne 'y' ) {
+#     $c3Email = Read-Host "Enter the email address of your Difenda C3 Engineer "
+#     while ($c3EmailConfirmation -ne 'y' -and $c3EmailConfirmation -ne 'n') {
+#         $c3EmailConfirmation = Read-Host 'Please confirm the email provided is correct [Y/N] '
+#     }
+#     if ($c3EmailConfirmation -eq 'y') {
+#         Write-Host "Using provided email address : $c3Email"
+#         # Write-Log -Sev 1 -Line (__LINE__) -Msg "Using provided key."
+#     }
+#     else {
+#         $c3Email = $null
+#         $c3EmailConfirmation = $null
+#     }
+# }
+# Write-Host
 
 ############################################################################################################
 # Obtaining information for Lighthouse delegations
@@ -1182,33 +1182,33 @@ while($confirmationSentinelAuth -ne "y") {
 Write-Host
 Write-Host '**********************************************************************************************'
 
-#####################################################
-#
-# Invoking customer onboard API
-#
-#####################################################
+# #####################################################
+# #
+# # Invoking customer onboard API
+# #
+# #####################################################
 
-$headers = New-Object "System.Collections.Generic.Dictionary[[String],[String]]"
-$headers.Add("Content-Type", "application/json")
-$myUrl = [System.Text.Encoding]::ASCII.GetString([System.Convert]::FromBase64String($myBase64key))
-$body = @{
-    ApprovalEmail = $c3Email
-    CustomerName = $company
-    Subscription = $subscriptionInfo
-    SentinelResourceGroup = $rgSentinelInfo
-    IntegrationResourceGroup = $rgIntegrationInfo
-    TriageServicePrincipal = $triageSpInfoObject
-    SsoItSecurity = $createSsoGroup1
-    SsoHpiNotifications = $createSsoGroup2
-    SsoNoNotifications = $createSsoGroup3
-    IsAvmCustomer = $isavm
-}
-try {
-    $response = Invoke-RestMethod -Method 'POST' -Uri $myUrl -Headers $headers -Body ($body | ConvertTo-Json) -ErrorAction Stop
-}   
-catch {
-    $ErrorMessage = $_.Exception.Message
-    Write-Log -Sev 3 -Line (__LINE__) -Msg "Failed creating $groupSso3"
-    Write-Log -Sev 3 -Line (__LINE__) -Msg $ErrorMessage
-}
-Write-Host $response
+# $headers = New-Object "System.Collections.Generic.Dictionary[[String],[String]]"
+# $headers.Add("Content-Type", "application/json")
+# $myUrl = [System.Text.Encoding]::ASCII.GetString([System.Convert]::FromBase64String($myBase64key))
+# $body = @{
+#     ApprovalEmail = $c3Email
+#     CustomerName = $company
+#     Subscription = $subscriptionInfo
+#     SentinelResourceGroup = $rgSentinelInfo
+#     IntegrationResourceGroup = $rgIntegrationInfo
+#     TriageServicePrincipal = $triageSpInfoObject
+#     SsoItSecurity = $createSsoGroup1
+#     SsoHpiNotifications = $createSsoGroup2
+#     SsoNoNotifications = $createSsoGroup3
+#     IsAvmCustomer = $isavm
+# }
+# try {
+#     $response = Invoke-RestMethod -Method 'POST' -Uri $myUrl -Headers $headers -Body ($body | ConvertTo-Json) -ErrorAction Stop
+# }   
+# catch {
+#     $ErrorMessage = $_.Exception.Message
+#     Write-Log -Sev 3 -Line (__LINE__) -Msg "Failed creating $groupSso3"
+#     Write-Log -Sev 3 -Line (__LINE__) -Msg $ErrorMessage
+# }
+# Write-Host $response

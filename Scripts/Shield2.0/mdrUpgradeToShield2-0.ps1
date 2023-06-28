@@ -903,7 +903,7 @@ Clear-Host
 Write-Log -Msg "Downloading Lighthouse ARM template files from repository ..."
 Write-Log -Sev 1 -Line (__LINE__) -Msg "Downloading ARM template file for the Sentinel Resource group delegations."
 try {
-    $downloadSentinelTemplate = Invoke-WebRequest https://github.com/Difenda/MDR-Onboard/blob/main/createUiDefinition.json -OutFile ./sentinelDelegations1.json -ErrorAction Stop
+    $downloadSentinelTemplate = Invoke-WebRequest https://raw.githubusercontent.com/Difenda/MDR-Onboard/main/Scripts/Shield2.0/sentinelDelegations.json -OutFile ./sentinelDelegations.json -ErrorAction Stop
 }
 catch {
     $ErrorMessage = $_.Exception.Message
@@ -914,7 +914,7 @@ catch {
 Write-Host
 Write-Log -Sev 1 -Line (__LINE__) -Msg "Downloading ARM template file for the Integration Resource group delegations."
 try {
-    $downloadIntegrationTemplate = Invoke-WebRequest https://github.com/Difenda/MDR-Onboard/blob/main/createUiDefinition.json -OutFile ./integrationDelegations1.json -ErrorAction Stop
+    $downloadIntegrationTemplate = Invoke-WebRequest https://raw.githubusercontent.com/Difenda/MDR-Onboard/main/Scripts/Shield2.0/integrationDelegations.json -OutFile ./integrationDelegations.json -ErrorAction Stop
 }
 catch {
     $ErrorMessage = $_.Exception.Message

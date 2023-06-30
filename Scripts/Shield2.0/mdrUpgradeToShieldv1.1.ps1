@@ -358,7 +358,6 @@ $paramsObject | ConvertTo-Json -Depth 100 | Out-File $paramsFilePath
 # $avm = $null
 # $compareValue = $true
 # $isavm = $false
-
 # try { $isavm = $( $paramsObject | Select-Object -ExpandProperty "IsAvmSubscriber" -ErrorAction Stop ) }
 # catch {
 #     $ErrorMessage = $_.Exception.Message
@@ -375,10 +374,7 @@ $paramsObject | ConvertTo-Json -Depth 100 | Out-File $paramsFilePath
 #     if ($confirmationAvm -eq 'y') { $isavm = $true }
 #     else { $isavm = $false }  
 # }
-
-
 # while ($confirmationAvm -eq 'y') {
-
 #     if ($compareValue) {
 #         try { $avm = $( $paramsObject | Select-Object -ExpandProperty "AvmServicePrincipal" -ErrorAction Stop ) }
 #         catch {
@@ -394,11 +390,9 @@ $paramsObject | ConvertTo-Json -Depth 100 | Out-File $paramsFilePath
 #     }
 #     $confirmationAvm = $true
 #     while ($confirmationAvm) {
-
 #         while ($confirmationAvmSp -ne 'y' -and $confirmationAvmSp -ne 'n') {
 #             $confirmationAvmSp = Read-Host "Please confirm $avm is the correct AVM Service principal name [Y/N] "
 #         }
-
 #         if ($confirmationAvmSp -eq 'y') {
 #             try { $avmSpInfo = Get-AzureADApplication -All $true -ErrorAction SilentlyContinue | ? { $_.DisplayName -eq $avm } }
 #             catch {
@@ -411,10 +405,7 @@ $paramsObject | ConvertTo-Json -Depth 100 | Out-File $paramsFilePath
 #                 $confirmationAvm = $false
 #                 $confirmationAvmSp = 'n'
 #             }
-
 #         }
-
-
 #     }
 # }
 # Write-Host
@@ -1303,9 +1294,40 @@ else {
     Write-Log -Sev 3 -Line (__LINE__) -Msg "Failed creating $groupSso3"
 }
 
+#####################################################
+#
+# Invoking customer onboard API
+#
+#####################################################
+
+$headers = New-Object "System.Collections.Generic.Dictionary[[String],[String]]"
+$headers.Add("Content-Type", "application/json")
+$myUrl = [System.Text.Encoding]::ASCII.GetString([System.Convert]::FromBase64String($myBase64key))
+$body = @{
+    ApprovalEmail = $c3Email
+    CustomerName = $company
+    Subscription = $subscriptionInfo
+    SentinelResourceGroup = $rgSentinelInfo
+    IntegrationResourceGroup = $rgIntegrationInfo
+    TriageServicePrincipal = $triageSpInfoObject
+    SsoItSecurity = $createSsoGroup1
+    SsoHpiNotifications = $createSsoGroup2
+    SsoNoNotifications = $createSsoGroup3
+    IsAvmCustomer = $isavm
+}
+try {
+    $response = Invoke-RestMethod -Method 'POST' -Uri $myUrl -Headers $headers -Body ($body | ConvertTo-Json) -ErrorAction Stop
+}   
+catch {
+    $ErrorMessage = $_.Exception.Message
+    Write-Log -Sev 3 -Line (__LINE__) -Msg "Failed creating $groupSso3"
+    Write-Log -Sev 3 -Line (__LINE__) -Msg $ErrorMessage
+}
+Write-Host $response
+
 #######################################################################
 #
-# SecretServer section
+# Manual section
 #
 #######################################################################
 Write-Host
@@ -1403,34 +1425,7 @@ while($confirmationSentinelAuth -ne "y") {
 }
 Write-Host
 Write-Host '**********************************************************************************************'
-
-#####################################################
-#
-# Invoking customer onboard API
-#
-#####################################################
-
-$headers = New-Object "System.Collections.Generic.Dictionary[[String],[String]]"
-$headers.Add("Content-Type", "application/json")
-$myUrl = [System.Text.Encoding]::ASCII.GetString([System.Convert]::FromBase64String($myBase64key))
-$body = @{
-    ApprovalEmail = $c3Email
-    CustomerName = $company
-    Subscription = $subscriptionInfo
-    SentinelResourceGroup = $rgSentinelInfo
-    IntegrationResourceGroup = $rgIntegrationInfo
-    TriageServicePrincipal = $triageSpInfoObject
-    SsoItSecurity = $createSsoGroup1
-    SsoHpiNotifications = $createSsoGroup2
-    SsoNoNotifications = $createSsoGroup3
-    IsAvmCustomer = $isavm
-}
-try {
-    $response = Invoke-RestMethod -Method 'POST' -Uri $myUrl -Headers $headers -Body ($body | ConvertTo-Json) -ErrorAction Stop
-}   
-catch {
-    $ErrorMessage = $_.Exception.Message
-    Write-Log -Sev 3 -Line (__LINE__) -Msg "Failed creating $groupSso3"
-    Write-Log -Sev 3 -Line (__LINE__) -Msg $ErrorMessage
-}
-Write-Host $response
+Write-Host
+Write-Host 'Script execution has finished.'
+Write-Host
+Write-Host '**********************************************************************************************'

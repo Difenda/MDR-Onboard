@@ -94,8 +94,8 @@ While ($company -eq $null) {
         }
         else {
             while($confirmationCompany -ne "y") {
-                while ($company.length -lt 4) {
-                    $company = Read-Host 'Enter the Customer name used in Difenda Services (4-10 Alphanumeric characters) '
+                while ($company.length -lt 3) {
+                    $company = Read-Host 'Enter the Customer name used in Difenda Services (3 or more alphanumeric characters) '
                 }
                 while ($confirmationCompany -ne 'y' -and $confirmationCompany -ne 'n') {
                     $confirmationCompany = Read-Host "Are you sure you want to use $company as the Company name [Y/N] "
@@ -764,6 +764,22 @@ else {
         }
     }
 
+    try {
+        $devOpsUserAdminRole = New-AzRoleAssignment -ObjectId $devOpsSpInfo.Id -RoleDefinitionName 'User Access Administrator' -ResourceGroupName $rgIntegration -ErrorAction Stop
+    }
+    catch {
+        $ErrorMessage = $_.Exception.Message
+        if ($ErrorMessage -like "*Conflict*") {
+            Write-Log -Sev 2 -Line (__LINE__) -Msg "Conflict creating Azure role assignment. Role may be already assigned."
+            Exit
+        }
+        else {
+            Write-Log -Sev 2 -Line (__LINE__) -Msg "Error creating role assignment for the DevOps Service principal"
+            Write-Log -Sev 2 -Line (__LINE__) -Msg $ErrorMessage
+            Exit
+        }
+    }
+
 }
 
 if ($devOpsRoleAssignment) {
@@ -773,7 +789,14 @@ if ($devOpsRoleAssignment) {
     Write-Host "Role definition name :" $devOpsRoleAssignment.RoleDefinitionName
     Write-Host "Role definition ID   :" $devOpsRoleAssignment.RoleDefinitionId
 }
-else {}
+Write-Host
+if ($devOpsUserAdminRole) {
+    Write-Log -Msg "Azure role assignment created for DevOps Service principal with the following details :"
+    Write-Host "Scope                :" $devOpsUserAdminRole.Scope
+    Write-Host "Display name         :" $devOpsUserAdminRole.DisplayName
+    Write-Host "Role definition name :" $devOpsUserAdminRole.RoleDefinitionName
+    Write-Host "Role definition ID   :" $devOpsUserAdminRole.RoleDefinitionId
+}
 
 Write-Host
 Write-Host "Integration Resource group creation conplete."
@@ -1314,6 +1337,7 @@ $body = @{
     SsoHpiNotifications = $createSsoGroup2
     SsoNoNotifications = $createSsoGroup3
     IsAvmCustomer = $isavm
+    DevOpsServicePrincipal = $devOpsSpInfo
 }
 try {
     $response = Invoke-RestMethod -Method 'POST' -Uri $myUrl -Headers $headers -Body ($body | ConvertTo-Json) -ErrorAction Stop

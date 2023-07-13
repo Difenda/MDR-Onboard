@@ -684,6 +684,7 @@ Write-Log -Msg "Creating Integration Resource group for Difenda MXDR resource ..
 Write-Host
 if ($integrationRgExists) {
     Write-Log -Sev 1 -Line (__LINE__) -Msg "The Integration resource group already exists. Nothing to do."
+    $newIntegrationRg = $rgIntegrationInfo
 }
 else {
     Write-Host "Creating Integration Resource group $rgIntegration in the Subscription" $azContext.Subscription.Name "..."
@@ -1331,7 +1332,7 @@ $body = @{
     CustomerName = $company
     Subscription = $subscriptionInfo
     SentinelResourceGroup = $rgSentinelInfo
-    IntegrationResourceGroup = $rgIntegrationInfo
+    IntegrationResourceGroup = $newIntegrationRg
     TriageServicePrincipal = $triageSpInfoObject
     SsoItSecurity = $createSsoGroup1
     SsoHpiNotifications = $createSsoGroup2

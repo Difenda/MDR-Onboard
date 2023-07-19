@@ -502,7 +502,7 @@ else {$DifendaTenantId = Read-Host "Enter Difenda Tenant Id       "}
 
 try { $ContributorGroupId = $( $paramsObject | Select-Object -ExpandProperty "ContributorGroupId" -ErrorAction Stop ) }
 catch {}
-if ($ContributorGroupId) { Write-Host "Contributor Group Id         :" $DifendaTenantId }
+if ($ContributorGroupId) { Write-Host "Contributor Group Id         :" $ContributorGroupId }
 else {$ContributorGroupId = Read-Host "Enter Contributor group Id    "}
 
 try { $L1GroupId = $( $paramsObject | Select-Object -ExpandProperty "L1GroupId" -ErrorAction Stop ) }

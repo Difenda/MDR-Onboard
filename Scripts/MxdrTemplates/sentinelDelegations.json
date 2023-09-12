@@ -1,0 +1,154 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "mspOfferName": {
+            "type": "string",
+            "metadata": {
+                "description": "Specify a unique name for your offer"
+            },
+            "defaultValue": "Difenda MXDR - Sentinel resources"
+        },
+        "mspOfferDescription": {
+            "type": "string",
+            "metadata": {
+                "description": "Description of the Managed Service Provider offering"
+            },
+            "defaultValue": "Difenda MXDR Lighthouse delegations for the Microsoft Sentinel Resource group"
+        },
+        "managedByTenantId": {
+            "type": "string",
+            "metadata": {
+                "description": "Specify the tenant id of the Managed Service Provider"
+            }
+        },
+        "contributorGroupId": {
+            "type": "string",
+            "metadata": {
+                "description": "Contributor group ID"
+            }
+        },
+        "readerGroupId": {
+            "type": "string",
+            "metadata": {
+                "description": "Reader group ID"
+            }
+        },
+        "L1GroupId": {
+            "type": "string",
+            "metadata": {
+                "description": "L1 group ID"
+            }
+        },
+        "L2GroupId": {
+            "type": "string",
+            "metadata": {
+                "description": "L2 group ID"
+            }
+        },
+        "authorizations": {
+            "type": "array",
+            "metadata": {
+                "description": "Specify an array of objects, containing tuples of Azure Active Directory principalId, a Azure roleDefinitionId, and an optional principalIdDisplayName."
+            },
+            "defaultValue": [
+                {
+                    "principalId": "[parameters('readerGroupId')]",
+                    "roleDefinitionId": "8d289c81-5878-46d4-8554-54e1e3d8b5cb",
+                    "principalIdDisplayName": "Difenda C3 TH/RIR/DE - Microsoft Sentinel Reader"
+                },
+                {
+                    "principalId": "[parameters('contributorGroupId')]",
+                    "roleDefinitionId": "b24988ac-6180-42a0-ab88-20f7382dd24c",
+                    "principalIdDisplayName": "Difenda C3 Platform & Dev - Resource Group Contributor"
+                },
+                {
+                    "principalId": "[parameters('contributorGroupId')]",
+                    "roleDefinitionId": "91c1777a-f3dc-4fae-b103-61d183457e46",
+                    "principalIdDisplayName": "Difenda C3 Platform & Dev - Registration Assignment Delete"
+                },
+                {
+                    "principalId": "[parameters('L1GroupId')]",
+                    "roleDefinitionId": "8d289c81-5878-46d4-8554-54e1e3d8b5cb",
+                    "principalIdDisplayName": "Difenda C3 Operations L1 - Microsoft Sentinel Reader"
+                },
+                {
+                    "principalId": "[parameters('L1GroupId')]",
+                    "roleDefinitionId": "3e150937-b8fe-4cfb-8069-0eaf05ecd056",
+                    "principalIdDisplayName": "Difenda C3 Operations L1 - Microsoft Sentinel Responder"
+                },
+                {
+                    "principalId": "[parameters('L1GroupId')]",
+                    "roleDefinitionId": "51d6186e-6489-4900-b93f-92e23144cca5",
+                    "principalIdDisplayName": "Difenda C3 Operations L1 - Microsoft Sentinel Playbook Operator"
+                },
+                {
+                    "principalId": "[parameters('L2GroupId')]",
+                    "roleDefinitionId": "ab8e14d6-4a74-4a29-9ba8-549422addade",
+                    "principalIdDisplayName": "Difenda C3 Operations L2 - Microsoft Sentinel Contributor"
+                }
+            ]
+        },
+        "rgName": {
+            "type": "string"
+        },
+        "location": {
+            "type": "string"
+        }
+    },
+    "variables": {
+        "mspRegistrationName": "[guid(parameters('mspOfferName'))]",
+        "mspAssignmentName": "[guid(parameters('mspOfferName'))]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Resources/resourceGroups",
+            "apiVersion": "2020-06-01",
+            "name": "[parameters('rgName')]",
+            "location": "[parameters('location')]",
+            "properties": {}
+        },
+        
+        {
+            "condition": "[not(empty(resourceId('Microsoft.ManagedServices/registrationDefinitions/', variables('mspRegistrationName'))))]",
+            "type": "Microsoft.ManagedServices/registrationDefinitions",
+            "apiVersion": "2019-06-01",
+            "name": "[variables('mspRegistrationName')]",
+            "properties": {
+                "registrationDefinitionName": "[parameters('mspOfferName')]",
+                "description": "[concat(parameters('mspOfferDescription'), ' (', parameters('rgName'), ')')]",
+                "managedByTenantId": "[parameters('managedByTenantId')]",
+                "authorizations": "[parameters('authorizations')]"
+            }
+        },
+        {
+            "condition": "[not(empty(resourceId('Microsoft.ManagedServices/registrationDefinitions/', variables('mspRegistrationName'))))]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2018-05-01",
+            "name": "rgAssignment",
+            "resourceGroup": "[parameters('rgName')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ManagedServices/registrationDefinitions/', variables('mspRegistrationName'))]",
+                "[resourceId('Microsoft.Resources/resourceGroups',parameters('rgName'))]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {},
+                    "resources": [
+                        {
+                            "type": "Microsoft.ManagedServices/registrationAssignments",
+                            "apiVersion": "2019-06-01",
+                            "name": "[variables('mspAssignmentName')]",
+                            "properties": {
+                                "registrationDefinitionId": "[resourceId('Microsoft.ManagedServices/registrationDefinitions/', variables('mspRegistrationName'))]"
+                            }
+                        }
+                    ]
+                }
+            }
+        }
+    ]
+}

@@ -94,7 +94,7 @@ $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown')
 Clear-Host
 $confirmationCompany = $null
 $company = $null
-While ($company -eq $null) {
+While ($null -eq $company) {
     if ($parameterCount -gt 0) {
         try { $company = $( $paramsObject | Select-Object -ExpandProperty "CustomerName" -ErrorAction Stop ) }
         catch {
@@ -161,7 +161,7 @@ $subscriptionId = $null
 $confirmationSubs = $null
 $compareValue = 0
 while ($confirmationSubs -ne 'y') {
-    while ($subscriptionId -eq $null) {
+    while ($null -eq $subscriptionId) {
         if ($parameterCount -gt $compareValue) {
             try { $subscriptionId = $( $paramsObject | Select-Object -ExpandProperty "SubscriptionId" -ErrorAction Stop ) }
             catch {
@@ -235,7 +235,7 @@ $userToCompare = [regex]::Matches((az ad signed-in-user show --query userPrincip
 Write-Log -Sev 1 -Line $(__LINE__) -Msg "Current user is : $userToCompare"
 Write-Host
 
-$currentUserDetails = Get-AzADUser | ? { $_.UserPrincipalName -like $userToCompare }
+$currentUserDetails = Get-AzADUser | Where-Object { $_.UserPrincipalName -like $userToCompare }
 
 if ($currentUserDetails) { Write-Log -Sev 1 -Line $(__LINE__) -Msg "Succesfully obtained details for user", $currentUserDetails.UserPrincipalName }
 else {
@@ -352,7 +352,7 @@ if ($location) {
     }
 }
 
-if ($location -eq $null -or $confirmRegion -eq 'n') {
+if ($null -eq $location -or $confirmRegion -eq 'n') {
     try {
         $azLocations = Get-AzLocation | Where-Object {$_.Providers -eq "Microsoft.OperationalInsights" }
     }
@@ -366,11 +366,11 @@ if ($location -eq $null -or $confirmRegion -eq 'n') {
         while ($confirmRegion -ne 'y') {
             $global:i=0
             $regionsIndex = 0
-            $azLocations | Group-Object -Property GeographyGroup | Sort-Object GeographyGroup | Select @{ Name="Item";Expression={ $global:i++;$global:i } }, Name -OutVariable regionMenu | Format-Table -AutoSize
+            $azLocations | Group-Object -Property GeographyGroup | Sort-Object GeographyGroup | Select-Object @{ Name="Item";Expression={ $global:i++;$global:i } }, Name -OutVariable regionMenu | Format-Table -AutoSize
             while ($regionsIndex -eq 0 -or $regionsIndex -gt $i) {
                 $regionsIndex = Read-Host "Select the Azure region to deploy MXDR resources "
             }
-            $selectedRegion = $regionMenu | where { $_.Item -eq $regionsIndex }
+            $selectedRegion = $regionMenu | Where-Object { $_.Item -eq $regionsIndex }
             Write-Host
             while ($confirmRegion -ne 'y' -and $confirmRegion -ne 'n') {
                 $regionName = $($selectedRegion.name)
@@ -388,11 +388,11 @@ if ($location -eq $null -or $confirmRegion -eq 'n') {
         while ($confirmLocation -ne 'y') {
             $global:x=0
             $locationsIndex = 0
-            $azLocations | Where-Object { $_.GeographyGroup -eq $regionName } | Sort-Object DisplayName | Select @{ Name="Item";Expression={ $global:x++;$global:x } }, DisplayName, Location, RegionType, PhysicalLocation -OutVariable locationMenu | Format-Table -AutoSize
+            $azLocations | Where-Object { $_.GeographyGroup -eq $regionName } | Sort-Object DisplayName | Select-Object @{ Name="Item";Expression={ $global:x++;$global:x } }, DisplayName, Location, RegionType, PhysicalLocation -OutVariable locationMenu | Format-Table -AutoSize
             while ($locationsIndex -eq 0 -or $locationsIndex -gt $x) {
                 $locationsIndex = Read-Host "Select the Azure location to deploy MXDR resources "
             }
-            $selectedLocation = $locationMenu | where { $_.Item -eq $locationsIndex }
+            $selectedLocation = $locationMenu | Where-Object { $_.Item -eq $locationsIndex }
             Write-Host
             while ($confirmLocation -ne 'y' -and $confirmLocation -ne 'n') {
                 $location = $($selectedLocation.Location)
@@ -445,7 +445,7 @@ $rgSentinel = $null
 $confirmationrgSentinel = $null
 $compareValue = 0
 while($confirmationrgSentinel -ne "y") {
-    while ($rgSentinel -eq $null) {
+    while ($null -eq $rgSentinel) {
         if ($parameterCount -gt $compareValue) {
             try { $rgSentinel = $( $paramsObject | Select-Object -ExpandProperty "SentinelRgName" -ErrorAction Stop ) }
             catch {
@@ -521,7 +521,7 @@ $SentinelWs =  $null
 $confirmationSentinelWs = $null
 $compareValue = 0
 while($confirmationSentinelWs -ne "y") {
-    while ($SentinelWs -eq $null) {
+    while ($null -eq $SentinelWs) {
         if ($parameterCount -gt $compareValue) {
             try { $SentinelWs = $( $paramsObject | Select-Object -ExpandProperty "WorkspaceName" -ErrorAction Stop ) }
             catch {
@@ -663,7 +663,7 @@ $rgIntegration = $null
 $confirmationrgIntegration = $null
 $compareValue = 0
 while($confirmationRgIntegration -ne "y") {
-    while ($rgIntegration -eq $null) {
+    while ($null -eq $rgIntegration) {
         if ($parameterCount -gt $compareValue) {
             try { $rgIntegration = $( $paramsObject | Select-Object -ExpandProperty "IntegrationRgName" -ErrorAction Stop ) }
             catch {
@@ -740,7 +740,7 @@ $triageSpExists = $false
 $compareValue = 0
 
 while($confirmationTriage -ne 'y') {
-    while ($triage -eq $null) {
+    while ($null -eq $triage) {
         if ($parameterCount -gt $compareValue) {
             try { $triage = $( $paramsObject | Select-Object -ExpandProperty "TriageServicePrincipal" -ErrorAction Stop ) }
             catch {
@@ -758,7 +758,7 @@ while($confirmationTriage -ne 'y') {
         $confirmationTriage = Read-Host "Please confirm you want to use $triage as the name for the Triage Service principal [Y/N] "
     }
     if ($confirmationTriage -eq 'y') {
-        try { $triageSpInfo = Get-AzureADApplication -All $true -ErrorAction SilentlyContinue | ? { $_.DisplayName -eq $triage } }
+        try { $triageSpInfo = Get-AzureADApplication -All $true -ErrorAction SilentlyContinue | Where-Object { $_.DisplayName -eq $triage } }
         catch {
             $ErrorMessage = $_.Exception.Message
             Write-Log -Sev 3 -Line (__LINE__) -Msg "There was a problem validating the Triage Service principal."
@@ -823,7 +823,7 @@ $responseSpExists = $false
 $compareValue = 0
 
 while($confirmationResponseSp -ne 'y') {
-    while ($responseSp -eq $null) {
+    while ($null -eq $responseSp) {
         if ($parameterCount -gt $compareValue) {
             try { $responseSp = $( $paramsObject | Select-Object -ExpandProperty "ResponseServicePrincipal" -ErrorAction Stop ) }
             catch {
@@ -841,7 +841,7 @@ while($confirmationResponseSp -ne 'y') {
         $confirmationResponseSp = Read-Host "Please confirm you want to use $responseSp as the name for the Response Service principal [Y/N] "
     }
     if ($confirmationResponseSp -eq 'y') {
-        try { $responseSpInfo = Get-AzureADApplication -All $true -ErrorAction SilentlyContinue | ? { $_.DisplayName -eq $responseSp } }
+        try { $responseSpInfo = Get-AzureADApplication -All $true -ErrorAction SilentlyContinue | Where-Object { $_.DisplayName -eq $responseSp } }
         catch {
             $ErrorMessage = $_.Exception.Message
             Write-Log -Sev 3 -Line (__LINE__) -Msg "There was a problem validating the Response Service principal."
@@ -905,7 +905,7 @@ $DevopsSpExists = $false
 $compareValue = 0
 
 while ($confirmationDevopsSp -ne 'y') {
-    while ($devopsSp -eq $null) {
+    while ($null -eq $devopsSp) {
         if ($parameterCount -gt $compareValue) {
             try { $devopsSp = $( $paramsObject | Select-Object -ExpandProperty "DevOpsServicePrincipal" -ErrorAction Stop ) }
             catch {
@@ -923,7 +923,7 @@ while ($confirmationDevopsSp -ne 'y') {
         $confirmationDevopsSp = Read-Host "Please confirm you want to use $devopsSp as the name for the DevOps Service principal [Y/N] "
     }
     if ($confirmationDevopsSp -eq 'y') {
-        try { $DevopsSpInfo = Get-AzureADApplication -All $true -ErrorAction SilentlyContinue | ? { $_.DisplayName -eq $devopsSp } }
+        try { $DevopsSpInfo = Get-AzureADApplication -All $true -ErrorAction SilentlyContinue | Where-Object { $_.DisplayName -eq $devopsSp } }
         catch {
             $ErrorMessage = $_.Exception.Message
             Write-Log -Sev 3 -Line (__LINE__) -Msg "There was a problem validating the DevOps Service principal."
@@ -1009,7 +1009,7 @@ else {
 
 if ($isavm) {
     while($confirmationAvmSp -ne 'y') {
-        while ($avm -eq $null) {
+        while ($null -eq $avm) {
             if ($parameterCount -gt $compareValue) {
                 try { $avm = $( $paramsObject | Select-Object -ExpandProperty "AvmServicePrincipal" -ErrorAction Stop ) }
                 catch {
@@ -1027,7 +1027,7 @@ if ($isavm) {
             $confirmationAvmSp = Read-Host "Please confirm you want to use $avm as the name for the AVM Service principal [Y/N] "
         }
         if ($confirmationAvmSp -eq 'y') {
-            try { $AvmSpInfo = Get-AzureADApplication -All $true -ErrorAction SilentlyContinue | ? { $_.DisplayName -eq $avm } }
+            try { $AvmSpInfo = Get-AzureADApplication -All $true -ErrorAction SilentlyContinue | Where-Object { $_.DisplayName -eq $avm } }
             catch {
                 $ErrorMessage = $_.Exception.Message
                 Write-Log -Sev 3 -Line (__LINE__) -Msg "There was a problem validating the AVM Service principal."
@@ -1086,9 +1086,7 @@ Clear-Host
 Write-Host
 Write-Log -Msg 'Enter the information required for Difenda MXDR for OT service.'
 
-$confirmationOtSp = $null
 $confirmationOt = $null
-$otSp = $null
 $compareValue = 0
 $isOt = $false
 
@@ -1117,7 +1115,7 @@ if ($isOt) {
     $confirmationOtSubs = $null
     $compareValue = 0
     while ($confirmationOtSubs -ne 'y') {
-        while ($OtSubscriptionId -eq $null) {
+        while ($null -eq $OtSubscriptionId) {
             if ($parameterCount -gt $compareValue) {
                 try { $OtSubscriptionId = $( $paramsObject | Select-Object -ExpandProperty "OtSubscriptionId" -ErrorAction Stop ) }
                 catch {
@@ -1291,7 +1289,7 @@ if ($myBase64key) {
     Write-Log -Sev 1 -Line (__LINE__) -Msg "Encryption key previously provided will be used."
 }
 else {
-    while ($myBase64key -eq $null) {
+    while ($null -eq $myBase64key) {
         $myBase64key = Read-Host "Enter encryption key provided by Difenda " -MaskInput
     }
 }
@@ -1375,35 +1373,35 @@ if ($parameterCount -gt $compareValue) {
     catch {}
 }
 
-while ($lhConfirmation -eq $null) {
+while ($null -eq $lhConfirmation) {
     if ($DifendaTenantId) { Write-Host "Difenda Tenant Id            :" $DifendaTenantId }
     else {
-        while($DifendaTenantId -eq $null) {
+        while($null -eq $DifendaTenantId) {
             $DifendaTenantId = Read-Host "Enter Difenda Tenant Id       "
         }
     }
     Write-Host
     if ($ContributorGroupId) { Write-Host "Contributor Group Id         :" $ContributorGroupId }
     else {
-        while ($ContributorGroupId -eq $null) {
+        while ($null -eq $ContributorGroupId) {
             $ContributorGroupId = Read-Host "Enter Contributor group Id    "
         }
     }
     if ($L1GroupId) { Write-Host "L1 Group Id                  :" $L1GroupId }
     else {
-        while ($L1GroupId -eq $null) {
+        while ($null -eq $L1GroupId) {
             $L1GroupId = Read-Host "Enter Difenda L1 group Id     "
         }
     }
     if ($L2GroupId) { Write-Host "L2 Group Id                  :" $L2GroupId }
     else {
-        while ($L2GroupId -eq $null) {
+        while ($null -eq $L2GroupId) {
             $L2GroupId = Read-Host "Enter Difenda L2 group Id     "
         }
     }
     if ($ReaderGroupId) { Write-Host "Reader Group Id              :" $ReaderGroupId }
     else {
-        while ($ReaderGroupId -eq $null) {
+        while ($null -eq $ReaderGroupId) {
             $ReaderGroupId = Read-Host "Enter Difenda Reader group Id "
         }
     }
@@ -1492,8 +1490,6 @@ $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown')
 # Setting parameters for the creation of Service principals
 ############################################################################################################
 
-$SentinelScope = '/subscriptions/' + $subscriptionId + '/resourceGroups/' + $rgSentinel
-$IntegrationScope = '/subscriptions/' + $subscriptionId + '/resourceGroups/' + $rgIntegration
 $startDate = Get-Date
 $endDate = $startDate.AddYears(3)
 
@@ -2152,7 +2148,7 @@ else {
     }
     Start-Sleep -Seconds 30
     try {
-        $newTriage = Get-AzureADApplication -All $true -ErrorAction SilentlyContinue | ? { $_.DisplayName -eq $triage }
+        $newTriage = Get-AzureADApplication -All $true -ErrorAction SilentlyContinue | Where-Object { $_.DisplayName -eq $triage }
     }
     catch {
         $ErrorMessage = $_.Exception.Message
@@ -2339,7 +2335,7 @@ else {
     }
     Start-Sleep -Seconds 30
     try {
-        $newDevOpsApp = Get-AzureADApplication -All $true -ErrorAction SilentlyContinue | ? { $_.DisplayName -eq $devopsSp }
+        $newDevOpsApp = Get-AzureADApplication -All $true -ErrorAction SilentlyContinue | Where-Object { $_.DisplayName -eq $devopsSp }
     }
     catch {
         $ErrorMessage = $_.Exception.Message
@@ -2629,7 +2625,7 @@ else {
     }
     Start-Sleep -Seconds 30
     try {
-        $newResponse = Get-AzureADApplication -All $true -ErrorAction SilentlyContinue | ? { $_.DisplayName -eq $responseSp }
+        $newResponse = Get-AzureADApplication -All $true -ErrorAction SilentlyContinue | Where-Object { $_.DisplayName -eq $responseSp }
     }
     catch {
         $ErrorMessage = $_.Exception.Message
@@ -2652,7 +2648,7 @@ if ($newResponse) {
     }
     Write-Log -Sev 1 -Line (__LINE__) -Msg "API permissions assigned successfully"
     try{
-        $pwdAdminRole = Get-AzureADDirectoryRole -ErrorAction SilentlyContinue | ? { $_.DisplayName -eq "Password administrator" }
+        $pwdAdminRole = Get-AzureADDirectoryRole -ErrorAction SilentlyContinue | Where-Object { $_.DisplayName -eq "Password administrator" }
     }
     catch {
         $ErrorMessage = $_.Exception.Message
@@ -2672,7 +2668,7 @@ if ($newResponse) {
     }
     Write-Log -Sev 1 -Line (__LINE__) -Msg "Validating roles assigned to", $newResponse.DisplayName
     try {
-        $pwAdminRoleAssignment = Get-AzureADDirectoryRoleMember -ObjectId $pwdAdminRole.ObjectId | ? { $_.DisplayName -eq $newResponse.DisplayName }
+        $pwAdminRoleAssignment = Get-AzureADDirectoryRoleMember -ObjectId $pwdAdminRole.ObjectId | Where-Object { $_.DisplayName -eq $newResponse.DisplayName }
     }
     catch {
         $ErrorMessage = $_.Exception.Message
@@ -2915,7 +2911,7 @@ if ($isavm) {
         }
         Start-Sleep -Seconds 30
         try {
-            $newAvm = Get-AzureADApplication -All $true -ErrorAction SilentlyContinue | ? { $_.DisplayName -eq $avm }
+            $newAvm = Get-AzureADApplication -All $true -ErrorAction SilentlyContinue | Where-Object { $_.DisplayName -eq $avm }
         }
         catch {
             $ErrorMessage = $_.Exception.Message
@@ -3203,11 +3199,6 @@ Clear-Host
 
 Write-Log -Msg "Azure AD Security groups section."
 
-$AadSocGrpExists = $false
-$groupSso1Exists = $false
-$groupSso2Exists = $false
-$groupSso3Exists = $false
-
 #---------------------------------------------------
 # SecOps Security group
 #---------------------------------------------------
@@ -3370,7 +3361,7 @@ Write-Log -Sev 1 -Line (__LINE__) -Msg " - Description  : ", $groupSso3Info.Desc
 Write-Log -Msg "Assigning Azure Reader role on all subscriptions to the SecOps AAD Security group. Required for incident investigation and response."
 Write-Host
 Write-Log -Sev 1 -Line (__LINE__) -Msg "Obtaining list of all active subscriptions in tenant"
-$activeSubs = Get-AzSubscription | ? { $_.State -eq "Enabled" }
+$activeSubs = Get-AzSubscription | Where-Object { $_.State -eq "Enabled" }
 Start-Sleep -Seconds 5
 if ($null -ne $activeSubs) {
     foreach($s in $activeSubs) {

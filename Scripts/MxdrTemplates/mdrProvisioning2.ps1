@@ -1474,9 +1474,9 @@ Write-Log -Sev 1 -Line $(__LINE__) -Msg "AAD Group for Regular notifications    
 Write-Log -Sev 1 -Line $(__LINE__) -Msg "AAD Group for HPI notifications         : $groupSso2"
 Write-Log -Sev 1 -Line $(__LINE__) -Msg "AAD Group for No notifications          : $groupSso3"
 Write-Log -Sev 1 -Line $(__LINE__) -Msg "AAD Group for SecOps Access             : $groupSecOps"
-Write-Host
-Write-Log -Sev 1 -Line $(__LINE__) -Msg "Azure Key Vault name                    : $KeyVaultName"
-Write-Log -Sev 1 -Line $(__LINE__) -Msg "User Assigned Managed Identity          : $UamiName"
+# Write-Host
+# Write-Log -Sev 1 -Line $(__LINE__) -Msg "Azure Key Vault name                    : $KeyVaultName"
+# Write-Log -Sev 1 -Line $(__LINE__) -Msg "User Assigned Managed Identity          : $UamiName"
 Write-Host
 Write-Log -Sev 1 -Line $(__LINE__) -Msg "Difenda Engineer email address          : $c3Email"
 Write-Host
@@ -1976,6 +1976,29 @@ else {
     Write-Log -Sev 3 -Line (__LINE__) -Msg "Sentinel ARM template file not found."
 }
 
+Write-Log -Sev 1 -Line (__LINE__) -Msg "Collecting information for Sentinel workspace $rgSentinel ..."
+Start-Sleep -Seconds 15
+try {
+    $workspaceDetails = Get-AzOperationalInsightsWorkspace -Name $rgSentinel -ResourceGroupName $newSentinelRg.ResourceGroupName -ErrorAction SilentlyContinue
+}
+catch {
+    $ErrorMessage = $_.Exception.Message
+    Write-Log -Sev 3 -Line (__LINE__) -Msg "Failed to retrieve Sentinel workspace details for $rgSentinel."
+    Write-Log -Sev 3 -Line (__LINE__) -Msg $ErrorMessage
+    Exit
+}
+
+try {
+    $workspaceKeys = Get-AzOperationalInsightsWorkspaceSharedKey -Name $rgSentinel -ResourceGroupName $newSentinelRg.ResourceGroupName -ErrorAction SilentlyContinue
+}
+catch {
+    $ErrorMessage = $_.Exception.Message
+    Write-Log -Sev 3 -Line (__LINE__) -Msg "Failed to retrieve Sentinel workspace details for $rgSentinel."
+    Write-Log -Sev 3 -Line (__LINE__) -Msg $ErrorMessage
+    Exit
+}
+
+
 $sentinelWsObject = @{
     ResourceGroupName = $newSentinelArmTemplate.ResourceGroupName
     ProvisioningState = $newSentinelArmTemplate.ProvisioningState
@@ -1983,6 +2006,8 @@ $sentinelWsObject = @{
     Location = $newSentinelArmTemplate.Parameters.location.Value
     PricingTier = $newSentinelArmTemplate.Parameters.pricingTier.Value
     DataRetention = $newSentinelArmTemplate.Parameters.dataRetention.Value
+    WorkspaceId = $workspaceDetails.CustomerId
+    WorkspacePrimaryKey = $workspaceKeys.PrimarySharedKey
 }
 
 Start-Sleep -Seconds 10

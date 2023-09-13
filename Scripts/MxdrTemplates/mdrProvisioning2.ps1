@@ -35,7 +35,7 @@ function Get-ScriptLineNumber { return $MyInvocation.ScriptLineNumber }
 new-item alias:__LINE__ -value Get-ScriptLineNumber
 
 Clear-Host
-Write-Log -Msg "Start processing PowerShell script - v0.6b"
+Write-Log -Msg "Start processing PowerShell script - v0.8b"
 Write-Host
 Write-Log -Sev 1 -Line $(__LINE__) -Msg "Sample informational message"
 Write-Log -Sev 2 -Line $(__LINE__) -Msg "Sample warning message"
@@ -1962,7 +1962,7 @@ $sentinelArmTemplateParams = @{
 Write-Log -Sev 1 -Line (__LINE__) -Msg "$SentinelWsAction Microsoft Sentinel workspace $SentinelWs in the resource group $rgSentinel"
 if (Test-Path -Path ./sentinelArmTemplate.json -PathType Leaf) {
     try {
-        $newSentinelArmTemplate = New-AzResourceGroupDeployment -ResourceGroupName $newSentinelRg.ResourceGroupName -TemplateFile ./sentinelArmTemplate.json -TemplateParameterObject $sentinelArmTemplateParams -ErrorAction SilentlyContinue
+        $newSentinelArmTemplate = New-AzResourceGroupDeployment -ResourceGroupName $newSentinelRg.ResourceGroupName -TemplateFile ./sentinelArmTemplate.json -TemplateParameterObject $sentinelArmTemplateParams -ErrorAction Stop
     }
     catch {
         $ErrorMessage = $_.Exception.Message
@@ -1979,7 +1979,7 @@ else {
 Write-Log -Sev 1 -Line (__LINE__) -Msg "Collecting information for Sentinel workspace $SentinelWs ..."
 Start-Sleep -Seconds 15
 try {
-    $workspaceDetails = Get-AzOperationalInsightsWorkspace -Name $SentinelWs -ResourceGroupName $newSentinelRg.ResourceGroupName -ErrorAction SilentlyContinue
+    $workspaceDetails = Get-AzOperationalInsightsWorkspace -Name $SentinelWs -ResourceGroupName $newSentinelRg.ResourceGroupName -ErrorAction Stop
 }
 catch {
     $ErrorMessage = $_.Exception.Message
@@ -1989,7 +1989,7 @@ catch {
 }
 
 try {
-    $workspaceKeys = Get-AzOperationalInsightsWorkspaceSharedKey -Name $SentinelWs -ResourceGroupName $newSentinelRg.ResourceGroupName -ErrorAction SilentlyContinue
+    $workspaceKeys = Get-AzOperationalInsightsWorkspaceSharedKey -Name $SentinelWs -ResourceGroupName $newSentinelRg.ResourceGroupName -ErrorAction Stop
 }
 catch {
     $ErrorMessage = $_.Exception.Message

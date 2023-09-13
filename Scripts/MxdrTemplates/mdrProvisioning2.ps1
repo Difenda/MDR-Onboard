@@ -35,7 +35,7 @@ function Get-ScriptLineNumber { return $MyInvocation.ScriptLineNumber }
 new-item alias:__LINE__ -value Get-ScriptLineNumber
 
 Clear-Host
-Write-Log -Msg "Start processing PowerShell script - v0.4b"
+Write-Log -Msg "Start processing PowerShell script - v0.6b"
 Write-Host
 Write-Log -Sev 1 -Line $(__LINE__) -Msg "Sample informational message"
 Write-Log -Sev 2 -Line $(__LINE__) -Msg "Sample warning message"
@@ -1970,34 +1970,33 @@ if (Test-Path -Path ./sentinelArmTemplate.json -PathType Leaf) {
         Write-Log -Sev 3 -Line (__LINE__) -Msg $ErrorMessage
         Exit
     }
-    Write-Log -Sev 1 -Line (__LINE__) -Msg "Microsoft Sentinel workspace $rgSentinel $SentinelWsAction successful."
+    Write-Log -Sev 1 -Line (__LINE__) -Msg "Microsoft Sentinel workspace $SentinelWs $SentinelWsAction successful."
 }
 else {
     Write-Log -Sev 3 -Line (__LINE__) -Msg "Sentinel ARM template file not found."
 }
 
-Write-Log -Sev 1 -Line (__LINE__) -Msg "Collecting information for Sentinel workspace $rgSentinel ..."
+Write-Log -Sev 1 -Line (__LINE__) -Msg "Collecting information for Sentinel workspace $SentinelWs ..."
 Start-Sleep -Seconds 15
 try {
-    $workspaceDetails = Get-AzOperationalInsightsWorkspace -Name $rgSentinel -ResourceGroupName $newSentinelRg.ResourceGroupName -ErrorAction SilentlyContinue
+    $workspaceDetails = Get-AzOperationalInsightsWorkspace -Name $SentinelWs -ResourceGroupName $newSentinelRg.ResourceGroupName -ErrorAction SilentlyContinue
 }
 catch {
     $ErrorMessage = $_.Exception.Message
-    Write-Log -Sev 3 -Line (__LINE__) -Msg "Failed to retrieve Sentinel workspace details for $rgSentinel."
+    Write-Log -Sev 3 -Line (__LINE__) -Msg "Failed to retrieve Sentinel workspace details for $SentinelWs."
     Write-Log -Sev 3 -Line (__LINE__) -Msg $ErrorMessage
     Exit
 }
-$workspaceDetails
+
 try {
-    $workspaceKeys = Get-AzOperationalInsightsWorkspaceSharedKey -Name $rgSentinel -ResourceGroupName $newSentinelRg.ResourceGroupName -ErrorAction SilentlyContinue
+    $workspaceKeys = Get-AzOperationalInsightsWorkspaceSharedKey -Name $SentinelWs -ResourceGroupName $newSentinelRg.ResourceGroupName -ErrorAction SilentlyContinue
 }
 catch {
     $ErrorMessage = $_.Exception.Message
-    Write-Log -Sev 3 -Line (__LINE__) -Msg "Failed to retrieve Sentinel workspace details for $rgSentinel."
+    Write-Log -Sev 3 -Line (__LINE__) -Msg "Failed to retrieve Sentinel workspace details for $SentinelWs."
     Write-Log -Sev 3 -Line (__LINE__) -Msg $ErrorMessage
     Exit
 }
-$workspaceKeys
 
 $sentinelWsObject = @{
     ResourceGroupName = $newSentinelArmTemplate.ResourceGroupName

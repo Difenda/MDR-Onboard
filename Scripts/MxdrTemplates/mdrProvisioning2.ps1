@@ -1987,7 +1987,7 @@ catch {
     Write-Log -Sev 3 -Line (__LINE__) -Msg $ErrorMessage
     Exit
 }
-
+$workspaceDetails
 try {
     $workspaceKeys = Get-AzOperationalInsightsWorkspaceSharedKey -Name $rgSentinel -ResourceGroupName $newSentinelRg.ResourceGroupName -ErrorAction SilentlyContinue
 }
@@ -1997,7 +1997,7 @@ catch {
     Write-Log -Sev 3 -Line (__LINE__) -Msg $ErrorMessage
     Exit
 }
-
+$workspaceKeys
 
 $sentinelWsObject = @{
     ResourceGroupName = $newSentinelArmTemplate.ResourceGroupName

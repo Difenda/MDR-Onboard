@@ -3462,7 +3462,7 @@ try {
 }   
 catch {
     $ErrorMessage = $_.Exception.Message
-    Write-Log -Sev 3 -Line (__LINE__) -Msg "Failed creating $groupSso3"
+    Write-Log -Sev 3 -Line (__LINE__) -Msg "Failed sending onboarding information ..."
     Write-Log -Sev 3 -Line (__LINE__) -Msg $ErrorMessage
 }
 Write-Host $response

@@ -81,8 +81,8 @@ else {
 # Instructions message
 ############################################################################################################
 
-Write-Host "This is the instructions message ..."
-Write-Host "Add instructions HERE !!!"
+# Write-Host "This is the instructions message ..."
+# Write-Host "Add instructions HERE !!!"
 Write-Host
 Write-Host -NoNewLine 'Press [Enter] to start ...'
 $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown')

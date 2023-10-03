@@ -35,7 +35,7 @@ function Get-ScriptLineNumber { return $MyInvocation.ScriptLineNumber }
 new-item alias:__LINE__ -value Get-ScriptLineNumber
 
 Clear-Host
-Write-Log -Msg "Start processing PowerShell script - v0.9"
+Write-Log -Msg "Start processing PowerShell script - v0.9b"
 Write-Host
 Write-Log -Sev 1 -Line $(__LINE__) -Msg "Sample informational message"
 Write-Log -Sev 2 -Line $(__LINE__) -Msg "Sample warning message"
@@ -638,7 +638,7 @@ while ($confirmRetention -ne 'y') {
             $incidentCurrentRet = Get-AzOperationalInsightsTable -ResourceGroupName $rgSentinel -WorkspaceName "laws-crem" -TableName "SecurityIncident"
         
             if ($sentinelRetention -lt $alertCurrentRet.TotalRetentionInDays -or $sentinelRetention -lt $incidentCurrentRet.TotalRetentionInDays) { 
-                $currentMaxRetention = max($alertCurrentRet.TotalRetentionInDays, $incidentCurrentRet.TotalRetentionInDays)
+                $currentMaxRetention = ($alertCurrentRet.TotalRetentionInDays, $incidentCurrentRet.TotalRetentionInDays | Measure-Object -Maximum).Maximum
                 Write-Log -Sev 2 -Line (__LINE__) -Msg "Current set retention is larger than the value specified. Retention will not be changed."
                 $sentinelRetention = $currentMaxRetention
             }

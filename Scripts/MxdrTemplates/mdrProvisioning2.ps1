@@ -35,7 +35,7 @@ function Get-ScriptLineNumber { return $MyInvocation.ScriptLineNumber }
 new-item alias:__LINE__ -value Get-ScriptLineNumber
 
 Clear-Host
-Write-Log -Msg "Start processing PowerShell script - v0.9g"
+Write-Log -Msg "Start processing PowerShell script - v0.9h"
 Write-Host
 Write-Log -Sev 1 -Line $(__LINE__) -Msg "Sample informational message"
 Write-Log -Sev 2 -Line $(__LINE__) -Msg "Sample warning message"
@@ -639,7 +639,7 @@ while ($confirmRetention -ne 'y') {
        
         if ($currentSetRetention.retentionInDays -gt 364) { 
             Write-Host
-            Write-Log -Sev 2 -Line (__LINE__) -Msg "Current Sentinel default retention (", $currentSetRetention.retentionInDays days, ") is larger than the value specified. Retention will not be changed."
+            Write-Log -Sev 2 -Line (__LINE__) -Msg "Current Sentinel default retention (", $currentSetRetention.retentionInDays, "days ) is larger than the value specified. Retention will not be changed."
             $keepRetention = $true
             $sentinelRetention = $currentSetRetention.retentionInDays
             $tableRetention = $currentSetRetention.retentionInDays

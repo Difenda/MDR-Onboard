@@ -92,6 +92,12 @@ $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown')
 ############################################################################################################
 
 Clear-Host
+
+Write-Host
+Write-Host "Please provide the company name. Please note that special characters and spaces are not allowed."
+Write-Host
+
+$specialCharacters = ('\!|\#|\$|\%|\^|\&|\-|_|\"|\`|@|\\| ')
 $confirmationCompany = $null
 $company = $null
 While ($null -eq $company) {
@@ -116,8 +122,8 @@ While ($null -eq $company) {
         }
         else {
             while($confirmationCompany -ne "y") {
-                while ($company.length -lt 3) {
-                    $company = Read-Host 'Enter the Customer name to be used in Difenda Services (3 or more alphanumeric characters) '
+                while ($company.length -lt 3 -or $myString.Length -lt 3 -or $company -match $specialCharacters) {
+                    $company = Read-Host '--> Enter the Customer name to be used in Difenda Services (3 or more alphanumeric characters) '
                 }
                 while ($confirmationCompany -ne 'y' -and $confirmationCompany -ne 'n') {
                     Write-Host
@@ -596,7 +602,7 @@ $confirmQuota = $null
 $sentinelQuotaDef = 0
 while ($confirmQuota -ne 'y') {
     $confirmQuota = $null
-    if (!($sentinelQuota = Read-Host "Daily ingestion limit in GBs. (Integer value) [ $sentinelQuotaDef for no limit ] ")) { $sentinelQuota = $sentinelQuotaDef }
+    if (!([int]$sentinelQuota = Read-Host "Daily ingestion limit in GBs. (Integer value) [ $sentinelQuotaDef for no limit ] ")) { $sentinelQuota = $sentinelQuotaDef }
     while ($confirmQuota -ne 'y' -and $confirmQuota -ne 'n') {
         if ($sentinelQuota -ne 0) {
             Write-Host
@@ -619,13 +625,27 @@ Write-Host
 Write-Host "Set the default retention for all the data stored in this Sentinel workspace."
 Write-Host "In addition to setting the default retention for tables in this workspace, you can configure data retention and data archive on a per-table basis on the Tables page of this workspace."
 Write-Host
+Write-Host 'IMPORTANT: Please note that increasing data retention over 90 days will incur in additional Azure charges ($0.10 per GB per month). ' -ForegroundColor Yellow
+Write-Host
 $confirmRetention = $null
 $sentinelRetentionDef = 90
 while ($confirmRetention -ne 'y') {
     $confirmRetention = $null
-    if (!($sentinelRetention = Read-Host "Data Retention in Days. (Integer value) [ Default is $sentinelRetentionDef Days ] ")) { $sentinelRetention = $sentinelRetentionDef }
+    if (!([int]$sentinelRetention = Read-Host "Data Retention in Days. (Integer value) [ Default is $sentinelRetentionDef Days ] ")) { $sentinelRetention = $sentinelRetentionDef }
+
+    if ($sentinelWsExists) {
+            $alertCurrentRet = Get-AzOperationalInsightsTable -ResourceGroupName $rgSentinel -WorkspaceName "laws-crem" -TableName "SecurityIncident"
+            $incidentCurrentRet = Get-AzOperationalInsightsTable -ResourceGroupName $rgSentinel -WorkspaceName "laws-crem" -TableName "SecurityIncident"
+        
+            if ($sentinelRetention -lt $alertCurrentRet.TotalRetentionInDays -or $sentinelRetention -lt $incidentCurrentRet.TotalRetentionInDays) { 
+                $currentMaxRetention = max($alertCurrentRet.TotalRetentionInDays, $incidentCurrentRet.TotalRetentionInDays)
+                Write-Log -Sev 2 -Line (__LINE__) -Msg "Current set retention is larger than the value specified. Retention will not be changed."
+                $sentinelRetention = $currentMaxRetention
+            }
+    }
+
     while ($confirmRetention -ne 'y' -and $confirmRetention -ne 'n') {
-        if ($sentinelRetention -ne 90) {
+        if ($sentinelRetention -gt 90) {
             Write-Host
             Write-Log -Sev 2 -Line (__LINE__) -Msg "Once Microsoft Sentinel is enabled on your Azure Monitor Log Analytics workspace, every GB of data ingested into the workspace, excluding Basic Logs,"
             Write-Log -Sev 2 -Line (__LINE__) -Msg "can be retained at no charge for the first 90 days. Retention beyond 90 days and up to 2 years will be charged per the standard Azure Monitor pricing retention prices."

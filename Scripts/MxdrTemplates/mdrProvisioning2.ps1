@@ -639,7 +639,8 @@ while ($confirmRetention -ne 'y') {
         
             if ($sentinelRetention -lt $alertCurrentRet.TotalRetentionInDays -or $sentinelRetention -lt $incidentCurrentRet.TotalRetentionInDays) { 
                 $currentMaxRetention = ($alertCurrentRet.TotalRetentionInDays, $incidentCurrentRet.TotalRetentionInDays | Measure-Object -Maximum).Maximum
-                Write-Log -Sev 2 -Line (__LINE__) -Msg "Current set retention is larger than the value specified. Retention will not be changed."
+                Write-Host
+                Write-Log -Sev 2 -Line (__LINE__) -Msg "Current set retention ($currentMaxRetention days) is larger than the value specified. Retention will not be changed."
                 $sentinelRetention = $currentMaxRetention
             }
     }

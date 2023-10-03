@@ -634,16 +634,21 @@ while ($confirmRetention -ne 'y') {
     if (!([int]$sentinelRetention = Read-Host "Data Retention in Days. (Integer value) [ Default is $sentinelRetentionDef Days ] ")) { $sentinelRetention = $sentinelRetentionDef }
 
     if ($sentinelWsExists) {
-            $alertCurrentRet = Get-AzOperationalInsightsTable -ResourceGroupName $rgSentinel -WorkspaceName "laws-crem" -TableName "SecurityIncident"
-            $incidentCurrentRet = Get-AzOperationalInsightsTable -ResourceGroupName $rgSentinel -WorkspaceName "laws-crem" -TableName "SecurityIncident"
-        
-            if ($sentinelRetention -lt $alertCurrentRet.TotalRetentionInDays -or $sentinelRetention -lt $incidentCurrentRet.TotalRetentionInDays) { 
-                $currentMaxRetention = ($alertCurrentRet.TotalRetentionInDays, $incidentCurrentRet.TotalRetentionInDays | Measure-Object -Maximum).Maximum
-                Write-Host
-                Write-Log -Sev 2 -Line (__LINE__) -Msg "Current set retention ($currentMaxRetention days) is larger than the value specified. Retention will not be changed."
-                $keepRetention = $true
-                $sentinelRetention = $currentMaxRetention
-            }
+
+        $currentSetRetention = Get-AzOperationalInsightsWorkspace -Name $SentinelWs -ResourceGroupName $rgSentinel
+       
+        if ($currentSetRetention -gt 364) { 
+            Write-Host
+            Write-Log -Sev 2 -Line (__LINE__) -Msg "Current Sentinel default retention ($currentSetRetention days) is larger than the value specified. Retention will not be changed."
+            $keepRetention = $true
+            $sentinelRetention = $currentSetRetention
+            $tableRetention = $currentSetRetention
+        }
+        else {
+            Write-Host
+            Write-Log -Sev 1 -Line (__LINE__) -Msg "In order to maintain Alerts and Incidents records for investigations, the SecurityAlert and SecurityIncident tables retention will be set to 365 days."
+            $tableRetention = 365
+        }
     }
 
     while ($confirmRetention -ne 'y' -and $confirmRetention -ne 'n') {
@@ -1978,9 +1983,9 @@ $sentinelArmTemplateParams = @{
     pricingTier = 'PerGB2018';
     dailyQuota = $sentinelQuota;
     dataRetention = $sentinelRetention;
+    tableRetention = $tableRetention;
     immediatePurgeDataOn30Days = $false;
     location = $rgSentinel.Location;
-    tenantId = $azContext.Subscription.TenantId;
     subscriptionId = $azContext.Subscription.Id
 }
 

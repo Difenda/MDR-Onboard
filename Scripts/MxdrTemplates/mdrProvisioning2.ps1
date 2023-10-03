@@ -35,7 +35,7 @@ function Get-ScriptLineNumber { return $MyInvocation.ScriptLineNumber }
 new-item alias:__LINE__ -value Get-ScriptLineNumber
 
 Clear-Host
-Write-Log -Msg "Start processing PowerShell script - v0.9c"
+Write-Log -Msg "Start processing PowerShell script - v0.9d"
 Write-Host
 Write-Log -Sev 1 -Line $(__LINE__) -Msg "Sample informational message"
 Write-Log -Sev 2 -Line $(__LINE__) -Msg "Sample warning message"
@@ -641,6 +641,7 @@ while ($confirmRetention -ne 'y') {
                 $currentMaxRetention = ($alertCurrentRet.TotalRetentionInDays, $incidentCurrentRet.TotalRetentionInDays | Measure-Object -Maximum).Maximum
                 Write-Host
                 Write-Log -Sev 2 -Line (__LINE__) -Msg "Current set retention ($currentMaxRetention days) is larger than the value specified. Retention will not be changed."
+                $keepRetention = $true
                 $sentinelRetention = $currentMaxRetention
             }
     }
@@ -651,7 +652,10 @@ while ($confirmRetention -ne 'y') {
             Write-Log -Sev 2 -Line (__LINE__) -Msg "Once Microsoft Sentinel is enabled on your Azure Monitor Log Analytics workspace, every GB of data ingested into the workspace, excluding Basic Logs,"
             Write-Log -Sev 2 -Line (__LINE__) -Msg "can be retained at no charge for the first 90 days. Retention beyond 90 days and up to 2 years will be charged per the standard Azure Monitor pricing retention prices."
             Write-Host
-            $confirmRetention = Read-Host "Are you sure you want to set $sentinelRetention Days retention for this workspace? [Y/N] "
+            if ($keepRetention) { $confirmRetention = 'y' }
+            else {
+                $confirmRetention = Read-Host "Are you sure you want to set $sentinelRetention Days retention for this workspace? [Y/N] "
+            }
         }
         else { $confirmRetention = 'y' }
     }

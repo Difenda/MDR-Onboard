@@ -637,12 +637,12 @@ while ($confirmRetention -ne 'y') {
 
         $currentSetRetention = Get-AzOperationalInsightsWorkspace -Name $SentinelWs -ResourceGroupName $rgSentinel
        
-        if ($currentSetRetention -gt 364) { 
+        if ($currentSetRetention.retentionInDays -gt 364) { 
             Write-Host
-            Write-Log -Sev 2 -Line (__LINE__) -Msg "Current Sentinel default retention ($currentSetRetention days) is larger than the value specified. Retention will not be changed."
+            Write-Log -Sev 2 -Line (__LINE__) -Msg "Current Sentinel default retention (" $currentSetRetention.retentionInDays days ") is larger than the value specified. Retention will not be changed."
             $keepRetention = $true
-            $sentinelRetention = $currentSetRetention
-            $tableRetention = $currentSetRetention
+            $sentinelRetention = $currentSetRetention.retentionInDays
+            $tableRetention = $currentSetRetention.retentionInDays
         }
         else {
             Write-Host

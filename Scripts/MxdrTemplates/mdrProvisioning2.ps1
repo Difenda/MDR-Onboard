@@ -122,7 +122,7 @@ While ($null -eq $company) {
         }
         else {
             while($confirmationCompany -ne "y") {
-                while ($company.length -lt 3 -or $myString.Length -lt 3 -or $company -match $specialCharacters) {
+                while ($company.length -lt 3 -or $company -match $specialCharacters) {
                     $company = Read-Host '--> Enter the Customer name to be used in Difenda Services (3 or more alphanumeric characters) '
                 }
                 while ($confirmationCompany -ne 'y' -and $confirmationCompany -ne 'n') {
@@ -656,7 +656,6 @@ while ($confirmRetention -ne 'y') {
             Write-Host
             Write-Log -Sev 2 -Line (__LINE__) -Msg "Once Microsoft Sentinel is enabled on your Azure Monitor Log Analytics workspace, every GB of data ingested into the workspace, excluding Basic Logs,"
             Write-Log -Sev 2 -Line (__LINE__) -Msg "can be retained at no charge for the first 90 days. Retention beyond 90 days and up to 2 years will be charged per the standard Azure Monitor pricing retention prices."
-            Write-Host
             if ($keepRetention) { $confirmRetention = 'y' }
             else {
                 $confirmRetention = Read-Host "Are you sure you want to set $sentinelRetention Days retention for this workspace? [Y/N] "
@@ -665,8 +664,12 @@ while ($confirmRetention -ne 'y') {
         else { $confirmRetention = 'y' }
     }
 }
-Write-Host
-Write-Log -Sev 1 -Line (__LINE__) -Msg "Microsoft Sentinel default data retention will be set to $sentinelRetention Days."
+
+if ($keepRetention) {}
+else {
+    Write-Host
+    Write-Log -Sev 1 -Line (__LINE__) -Msg "Microsoft Sentinel default data retention will be set to $sentinelRetention Days."
+}
 
 $paramsObject | Add-Member -NotePropertyMembers $(@{WorkspaceName = $SentinelWs}) -Force
 $paramsObject | ConvertTo-Json -Depth 100 | Out-File $paramsFilePath

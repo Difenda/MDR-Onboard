@@ -35,7 +35,7 @@ function Get-ScriptLineNumber { return $MyInvocation.ScriptLineNumber }
 new-item alias:__LINE__ -value Get-ScriptLineNumber
 
 Clear-Host
-Write-Log -Msg "Start processing PowerShell script - v0.9i"
+Write-Log -Msg "Start processing PowerShell script - v0.9j"
 Write-Host
 Write-Log -Sev 1 -Line $(__LINE__) -Msg "Sample informational message"
 Write-Log -Sev 2 -Line $(__LINE__) -Msg "Sample warning message"
@@ -123,7 +123,7 @@ While ($null -eq $company) {
         else {
             while($confirmationCompany -ne "y") {
                 while ($company.length -lt 3 -or $company -match $specialCharacters) {
-                    $company = Read-Host '--> Enter the Customer name to be used in Difenda Services (3 or more alphanumeric characters) '
+                    $company = Read-Host 'Enter the Customer name to be used in Difenda Services (3 or more alphanumeric characters) '
                 }
                 while ($confirmationCompany -ne 'y' -and $confirmationCompany -ne 'n') {
                     Write-Host
@@ -1661,7 +1661,7 @@ if ($register) {
     foreach ($i in 0..$providersCount) {
         $registrationState2 = $azResourceProvider2[$i].RegistrationState
         if ($registrationState2 -eq "Registering") {
-            Write-Log -Sev 1 -Line (__LINE__) -Msg "Registration in process. Pausing for 5 seconds to validate again."
+            Write-Log -Sev 1 -Line (__LINE__) -Msg "Registration in progress. Pausing for 5 seconds to validate again."
             $azResourceProvider2 = Get-AzResourceProvider -ProviderNameSpace Microsoft.ManagedIdentity
             Start-Sleep -Seconds 5
             $foreach.Reset()
@@ -1720,7 +1720,7 @@ if ($register) {
     foreach ($i in 0..$providersCount) {
         $registrationState2 = $azResourceProvider2[$i].RegistrationState
         if ($registrationState2 -eq "Registering") {
-            Write-Log -Sev 1 -Line (__LINE__) -Msg "Registration in process. Pausing for 5 seconds to validate again."
+            Write-Log -Sev 1 -Line (__LINE__) -Msg "Registration in progress. Pausing for 5 seconds to validate again."
             $azResourceProvider2 = Get-AzResourceProvider -ProviderNameSpace Microsoft.ManagedServices
             Start-Sleep -Seconds 5
             $foreach.Reset()
@@ -1779,7 +1779,7 @@ if ($register) {
     foreach ($i in 0..$providersCount) {
         $registrationState2 = $azResourceProvider2[$i].RegistrationState
         if ($registrationState2 -eq "Registering") {
-            Write-Log -Sev 1 -Line (__LINE__) -Msg "Registration in process. Pausing for 5 seconds to validate again."
+            Write-Log -Sev 1 -Line (__LINE__) -Msg "Registration in progress. Pausing for 5 seconds to validate again."
             $azResourceProvider2 = Get-AzResourceProvider -ProviderNameSpace Microsoft.Web
             Start-Sleep -Seconds 5
             $foreach.Reset()
@@ -1838,7 +1838,7 @@ if ($register) {
     foreach ($i in 0..$providersCount) {
         $registrationState2 = $azResourceProvider2[$i].RegistrationState
         if ($registrationState2 -eq "Registering") {
-            Write-Log -Sev 1 -Line (__LINE__) -Msg "Registration in process. Pausing for 5 seconds to validate again."
+            Write-Log -Sev 1 -Line (__LINE__) -Msg "Registration in progress. Pausing for 5 seconds to validate again."
             $azResourceProvider2 = Get-AzResourceProvider -ProviderNameSpace Microsoft.Logic
             Start-Sleep -Seconds 5
             $foreach.Reset()
@@ -2312,29 +2312,32 @@ if ($isOt) {
     else {
         Write-Log -Sev 1 -Line (__LINE__) -Msg "No current assignments found."
     }
+
+    if ($isSecReader) {
+        Write-Log -Sev 1 -Line (__LINE__) -Msg "Triage Service principal", $newTriage.DisplayName, "already has the", $targetRole, "role assignment on", $OtSubscriptionInfo.Name, ". Nothing to do."
+    }
+    else {
+        Write-Log -Sev 1 -Line (__LINE__) -Msg "Assigning Azure", $targetRole, "role to the Triage Service principal on", $OtSubscriptionInfo.Name, "..."
+        try {
+            $triageRoleAssignment = New-AzRoleAssignment -ObjectId $newTriageSp.Id -RoleDefinitionName $targetRole -Scope $subScope -ErrorAction Stop
+        }
+        catch {
+            $ErrorMessage = $_.Exception.Message
+            if ($ErrorMessage -like "*Conflict*") {
+                Write-Log -Sev 2 -Line (__LINE__) -Msg "Conflict creating Azure role assignment. Role may be already assigned."
+                Exit
+            }
+            else {
+                Write-Log -Sev 2 -Line (__LINE__) -Msg "Error creating role assignment for the Triage Service principal"
+                Write-Log -Sev 2 -Line (__LINE__) -Msg $ErrorMessage
+                Exit
+            }
+        }
+    }
+
 }
 
-if ($isSecReader) {
-    Write-Log -Sev 1 -Line (__LINE__) -Msg "Triage Service principal", $newTriage.DisplayName, "already has the", $targetRole, "role assignment on", $OtSubscriptionInfo.Name, ". Nothing to do."
-}
-else {
-    Write-Log -Sev 1 -Line (__LINE__) -Msg "Assigning Azure", $targetRole, "role to the Triage Service principal on", $OtSubscriptionInfo.Name, "..."
-    try {
-        $triageRoleAssignment = New-AzRoleAssignment -ObjectId $newTriageSp.Id -RoleDefinitionName $targetRole -Scope $subScope -ErrorAction Stop
-    }
-    catch {
-        $ErrorMessage = $_.Exception.Message
-        if ($ErrorMessage -like "*Conflict*") {
-            Write-Log -Sev 2 -Line (__LINE__) -Msg "Conflict creating Azure role assignment. Role may be already assigned."
-            Exit
-        }
-        else {
-            Write-Log -Sev 2 -Line (__LINE__) -Msg "Error creating role assignment for the Triage Service principal"
-            Write-Log -Sev 2 -Line (__LINE__) -Msg $ErrorMessage
-            Exit
-        }
-    }
-}
+
 
 Write-Log -Sev 1 -Line (__LINE__) -Msg "Triage Service principal setup complete."
 

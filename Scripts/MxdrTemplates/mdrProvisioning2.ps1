@@ -35,7 +35,7 @@ function Get-ScriptLineNumber { return $MyInvocation.ScriptLineNumber }
 new-item alias:__LINE__ -value Get-ScriptLineNumber
 
 Clear-Host
-Write-Log -Msg "Start processing PowerShell script - v0.9j"
+Write-Log -Msg "Start processing PowerShell script - v0.9k"
 Write-Host
 Write-Log -Sev 1 -Line $(__LINE__) -Msg "Sample informational message"
 Write-Log -Sev 2 -Line $(__LINE__) -Msg "Sample warning message"
@@ -2839,28 +2839,30 @@ if ($isOt) {
     else {
         Write-Log -Sev 1 -Line (__LINE__) -Msg "No current assignments found."
     }
+
+    if ($isSecAdmin) {
+        Write-Log -Sev 1 -Line (__LINE__) -Msg "Response Service principal", $newResponse.DisplayName, "already has the", $targetRole, "role assignment on", $OtSubscriptionInfo.Name, "Nothing to do."
+    }
+    else {
+        Write-Log -Sev 1 -Line (__LINE__) -Msg "Assigning Azure", $targetRole, "role to the Response Service principal on", $OtSubscriptionInfo.Name, "..."
+        try {
+            $responseRoleAssignment = New-AzRoleAssignment -ObjectId $newResponseSp.Id -RoleDefinitionName $targetRole -Scope $subScope -ErrorAction Stop
+        }
+        catch {
+            $ErrorMessage = $_.Exception.Message
+            if ($ErrorMessage -like "*Conflict*") {
+                Write-Log -Sev 2 -Line (__LINE__) -Msg "Security Admin role already assigned."
+            }
+            else {
+                Write-Log -Sev 2 -Line (__LINE__) -Msg "Error creating role assignment for the Response Service principal"
+                Write-Log -Sev 2 -Line (__LINE__) -Msg $ErrorMessage
+                Exit
+            }
+        }
+    }
 }
 
-if ($isSecAdmin) {
-    Write-Log -Sev 1 -Line (__LINE__) -Msg "Response Service principal", $newResponse.DisplayName, "already has the", $targetRole, "role assignment on", $OtSubscriptionInfo.Name, "Nothing to do."
-}
-else {
-    Write-Log -Sev 1 -Line (__LINE__) -Msg "Assigning Azure", $targetRole, "role to the Response Service principal on", $OtSubscriptionInfo.Name, "..."
-    try {
-        $responseRoleAssignment = New-AzRoleAssignment -ObjectId $newResponseSp.Id -RoleDefinitionName $targetRole -Scope $subScope -ErrorAction Stop
-    }
-    catch {
-        $ErrorMessage = $_.Exception.Message
-        if ($ErrorMessage -like "*Conflict*") {
-            Write-Log -Sev 2 -Line (__LINE__) -Msg "Security Admin role already assigned."
-        }
-        else {
-            Write-Log -Sev 2 -Line (__LINE__) -Msg "Error creating role assignment for the Response Service principal"
-            Write-Log -Sev 2 -Line (__LINE__) -Msg $ErrorMessage
-            Exit
-        }
-    }
-}
+
 
 Write-Log -Sev 1 -Line (__LINE__) -Msg "Response Service principal setup complete."
 

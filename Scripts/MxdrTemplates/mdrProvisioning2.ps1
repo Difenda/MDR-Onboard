@@ -35,7 +35,7 @@ function Get-ScriptLineNumber { return $MyInvocation.ScriptLineNumber }
 new-item alias:__LINE__ -value Get-ScriptLineNumber
 
 Clear-Host
-Write-Log -Msg "Start processing PowerShell script - v0.9k"
+Write-Log -Msg "Start processing PowerShell script - v0.9i"
 Write-Host
 Write-Log -Sev 1 -Line $(__LINE__) -Msg "Sample informational message"
 Write-Log -Sev 2 -Line $(__LINE__) -Msg "Sample warning message"
@@ -285,7 +285,7 @@ $subscriptionScope = "/subscriptions/$subscriptionId"
 $currentRoleAssignment = Get-AzRoleAssignment -ObjectId $currentUserDetails.Id -Scope $subscriptionScope
 Write-Log -Sev 1 -Line $(__LINE__) -Msg "Current role assignment:", $currentRoleAssignment.RoleDefinitionName
 if ($currentRoleAssignment.RoleDefinitionName -eq "Owner" -Or $currentRoleAssignment.RoleDefinitionName -eq "Contributor") {
-    Write-Log -Sev 1 -Line $(__LINE__) -Msg "Azure role", $currentRoleAssignment.RoleDefinitionName ,"assigned to", $currentUserDetails.UserPrincipalName ,"on subscription", $azContext.Subscription.Name
+    Write-Log -Sev 1 -Line $(__LINE__) -Msg "Azure role (s)", $currentRoleAssignment.RoleDefinitionName ,"assigned to", $currentUserDetails.UserPrincipalName ,"on subscription", $azContext.Subscription.Name
 }
 else{
     Write-Log -Sev 3 -Line $(__LINE__) -Msg "User", $currentUserDetails.UserPrincipalName, "must be Owner on the subscription", $azContext.Subscription.Name, "to continue."
@@ -615,7 +615,12 @@ while ($confirmQuota -ne 'y') {
     }
 }
 Write-Host
-Write-Log -Sev 1 -Line (__LINE__) -Msg "Microsoft Sentinel daily ingestion limit will be set to $sentinelQuota GBs."
+if ($sentinelQuota -eq 0) {
+    Write-Log -Sev 1 -Line (__LINE__) -Msg "Microsoft Sentinel daily ingestion limit will not be set."
+}
+else {
+    Write-Log -Sev 1 -Line (__LINE__) -Msg "Microsoft Sentinel daily ingestion limit will be set to $sentinelQuota GBs."
+}
 
 Write-Host
 Write-Host -NoNewline 'Press [Enter] to continue ...'
@@ -625,7 +630,7 @@ Write-Host
 Write-Host "Set the default retention for all the data stored in this Sentinel workspace."
 Write-Host "In addition to setting the default retention for tables in this workspace, you can configure data retention and data archive on a per-table basis on the Tables page of this workspace."
 Write-Host
-Write-Host 'IMPORTANT: Please note that increasing data retention over 90 days will incur in additional Azure charges ($0.10 per GB per month). ' -ForegroundColor Yellow
+Write-Host 'IMPORTANT: Please note that increasing data retention over 90 days will incur in additional Azure charges (approximately $0.10 per GB per month). ' -ForegroundColor Yellow
 Write-Host
 $confirmRetention = $null
 $sentinelRetentionDef = 90
@@ -1157,6 +1162,7 @@ if ($isOt) {
             }
             if (-not $OtSubscriptionId) {
                 while ($OtSubscriptionId.length -ne 36) {
+                    Write-Host
                     $OtSubscriptionId = Read-Host 'Enter the Subscription ID where Microsoft Defendere for IoT is enabled '
                     if ($OtSubscriptionId -match '^[a-f0-9]{8}\-[a-f0-9]{4}\-[a-f0-9]{4}\-[a-f0-9]{4}\-[a-f0-9]{12}$') {}
                     else {

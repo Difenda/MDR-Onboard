@@ -35,7 +35,7 @@ function Get-ScriptLineNumber { return $MyInvocation.ScriptLineNumber }
 new-item alias:__LINE__ -value Get-ScriptLineNumber
 
 Clear-Host
-Write-Log -Msg "Start processing PowerShell script - v0.9i"
+Write-Log -Msg "Start processing PowerShell script - v0.9j"
 Write-Host
 Write-Log -Sev 1 -Line $(__LINE__) -Msg "Sample informational message"
 Write-Log -Sev 2 -Line $(__LINE__) -Msg "Sample warning message"
@@ -2125,11 +2125,12 @@ $mdeTriagePermission1 = New-Object -TypeName "Microsoft.Open.AzureAD.Model.Resou
 $mdeTriagePermission2 = New-Object -TypeName "Microsoft.Open.AzureAD.Model.ResourceAccess" -ArgumentList "ea8291d3-4b9a-44b5-bc3a-6cea3026dc79","Role" # Machine.Read.All
 $mdeTriagePermission3 = New-Object -TypeName "Microsoft.Open.AzureAD.Model.ResourceAccess" -ArgumentList "41269fc5-d04d-4bfd-bce7-43a51cea049a","Role" # Vulnerability.Read.All
 $mdeTriagePermission4 = New-Object -TypeName "Microsoft.Open.AzureAD.Model.ResourceAccess" -ArgumentList "15405ab2-2103-4a3c-ad80-e829841cedcc","Role" # Machine.CollectForensics
+$mdeTriagePermission5 = New-Object -TypeName "Microsoft.Open.AzureAD.Model.ResourceAccess" -ArgumentList "a833834a-4cf1-4732-8acf-bbcfa13fb610","Role" # User.Read.All
 
 Write-Log -Sev 1 -Line (__LINE__) -Msg "Creating MDE permissions assignment"
 $mdeTriageRequiredResourceAccess = New-Object -TypeName "Microsoft.Open.AzureAD.Model.RequiredResourceAccess"
 $mdeTriageRequiredResourceAccess.ResourceAppId = 'fc780465-2017-40d4-a0c5-307022471b92'
-$mdeTriageRequiredResourceAccess.ResourceAccess = $mdeTriagePermission1, $mdeTriagePermission2, $mdeTriagePermission3, $mdeTriagePermission4
+$mdeTriageRequiredResourceAccess.ResourceAccess = $mdeTriagePermission1, $mdeTriagePermission2, $mdeTriagePermission3, $mdeTriagePermission4, $mdeTriagePermission5
 
 #--------------------------------------------------------------------
 # Required permissions in Microsoft Threat Protection (M365 Defender)

@@ -35,7 +35,7 @@ function Get-ScriptLineNumber { return $MyInvocation.ScriptLineNumber }
 new-item alias:__LINE__ -value Get-ScriptLineNumber
 
 Clear-Host
-Write-Log -Msg "Start processing PowerShell script - v0.9j"
+Write-Log -Msg "Start processing PowerShell script - v0.9k"
 Write-Host
 Write-Log -Sev 1 -Line $(__LINE__) -Msg "Sample informational message"
 Write-Log -Sev 2 -Line $(__LINE__) -Msg "Sample warning message"
@@ -2350,7 +2350,7 @@ Write-Log -Sev 1 -Line (__LINE__) -Msg "Triage Service principal setup complete.
 
 Write-Log -Msg "Please grant Admin consent"
 Write-Host "   1. Open a new browser tab and connect to your Azure tenant as a Global Administrator."
-Write-Host "   2. Select Azure Active Directory."
+Write-Host "   2. Select Microsoft Entra ID."
 Write-Host "   3. Select 'App registrations', then 'All applications'."
 Write-Host "   4. Search for", $newTriage.DisplayName, "then select the App registration."
 Write-Host "   5. Select 'API permissions'."
@@ -2875,7 +2875,7 @@ Write-Log -Sev 1 -Line (__LINE__) -Msg "Response Service principal setup complet
 
 Write-Log -Msg "Please grant Admin consent"
 Write-Host "   1. Open a new browser tab and connect to your Azure tenant as a Global Administrator."
-Write-Host "   2. Select Azure Active Directory."
+Write-Host "   2. Select Microsoft Entra ID."
 Write-Host "   3. Select 'App registrations', then 'All applications'."
 Write-Host "   4. Search for", $newResponse.DisplayName, "then select the App registration."
 Write-Host "   5. Select 'API permissions'."
@@ -3063,7 +3063,7 @@ if ($isavm) {
 
     Write-Log -Msg "Please grant Admin consent"
     Write-Host "   1. Open a new browser tab and connect to your Azure tenant as a Global Administrator."
-    Write-Host "   2. Select Azure Active Directory."
+    Write-Host "   2. Select Microsoft Entra ID."
     Write-Host "   3. Select 'App registrations', then 'All applications'."
     Write-Host "   4. Search for", $newAvm.DisplayName, ", select the App registration."
     Write-Host "   5. Select 'API permissions'."

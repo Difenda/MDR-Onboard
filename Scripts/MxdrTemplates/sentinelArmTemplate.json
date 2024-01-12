@@ -146,38 +146,6 @@
                 "publisher": "Microsoft",
                 "promotionCode": ""
             }
-        },
-        {
-            "type": "Microsoft.OperationalInsights/workspaces/tables",
-            "apiVersion": "2021-12-01-preview",
-            "name": "[concat(parameters('workspaceName'), '/SecurityIncident')]",
-            "dependsOn": [
-                "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('workspaceName'))]"
-            ],
-            "properties": {
-                "totalRetentionInDays": "[parameters('tableRetention')]",
-                "plan": "Analytics",
-                "schema": {
-                    "name": "SecurityIncident"
-                },
-                "retentionInDays": "[parameters('dataRetention')]"
-            }
-        },
-        {
-            "type": "Microsoft.OperationalInsights/workspaces/tables",
-            "apiVersion": "2021-12-01-preview",
-            "name": "[concat(parameters('workspaceName'), '/SecurityAlert')]",
-            "dependsOn": [
-                "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('workspaceName'))]"
-            ],
-            "properties": {
-                "totalRetentionInDays": "[parameters('tableRetention')]",
-                "plan": "Analytics",
-                "schema": {
-                    "name": "SecurityAlert"
-                },
-                "retentionInDays": "[parameters('dataRetention')]"
-            }
         }
     ],
     "outputs": {}

@@ -2721,7 +2721,7 @@ if ($newResponse) {
         $ErrorMessage = $_.Exception.Message
         Write-Log -Sev 3 -Line (__LINE__) -Msg "Failed obtaining Role definition"
         Write-Log -Sev 3 -Line (__LINE__) -Msg $ErrorMessage
-        Exit
+        # Exit
     }
     Write-Log -Sev 1 -Line (__LINE__) -Msg "Obtaining Application details for", $newResponse.DisplayName
     try {

@@ -35,7 +35,7 @@ function Get-ScriptLineNumber { return $MyInvocation.ScriptLineNumber }
 new-item alias:__LINE__ -value Get-ScriptLineNumber
 
 Clear-Host
-Write-Log -Msg "Start processing PowerShell script - v0.9l"
+Write-Log -Msg "Start processing PowerShell script - v0.9m"
 Write-Host
 Write-Log -Sev 1 -Line $(__LINE__) -Msg "Sample informational message"
 Write-Log -Sev 2 -Line $(__LINE__) -Msg "Sample warning message"
@@ -2715,7 +2715,7 @@ if ($newResponse) {
     }
     Write-Log -Sev 1 -Line (__LINE__) -Msg "API permissions assigned successfully"
     try{
-        $pwdAdminRole = Get-AzureADDirectoryRole -ErrorAction SilentlyContinue | Where-Object { $_.DisplayName -eq "Password administrator" }
+        $pwdAdminRole = Get-AzureADDirectoryRole -ErrorAction SilentlyContinue | Where-Object { $_.DisplayName -eq "Password Administrator" }
     }
     catch {
         $ErrorMessage = $_.Exception.Message

@@ -35,7 +35,7 @@ function Get-ScriptLineNumber { return $MyInvocation.ScriptLineNumber }
 new-item alias:__LINE__ -value Get-ScriptLineNumber
 
 Clear-Host
-Write-Log -Msg "Start processing PowerShell script - v1.0b"
+Write-Log -Msg "Start processing PowerShell script - v1.0c"
 Write-Host
 Write-Log -Sev 1 -Line $(__LINE__) -Msg "Sample informational message"
 Write-Log -Sev 2 -Line $(__LINE__) -Msg "Sample warning message"
@@ -2719,18 +2719,16 @@ if ($newResponse) {
     }
     catch {
         $ErrorMessage = $_.Exception.Message
-        if ($pwdAdminRole) {
-            Write-Log -Sev 3 -Line (__LINE__) -Msg "Failed obtaining Role definition"
-            Write-Log -Sev 3 -Line (__LINE__) -Msg $ErrorMessage
-            Exit
-        }
-        else {
-            Write-Log -Sev 2 -Line (__LINE__) -Msg "The Password Administrator role is not enabled in the tenant. Enabling it now ..."
-            $pwAdminRoleTemplate = Get-AzureADDirectoryRoleTemplate -ErrorAction SilentlyContinue | Where-Object {$_.DisplayName -eq "Password Administrator"}
-            $pwdAdminRole = Enable-AzureADDirectoryRole -RoleTemplateId $pwAdminRoleTemplate.ObjectId -ErrorAction SilentlyContinue
-        }
-        
+        Write-Log -Sev 3 -Line (__LINE__) -Msg "Failed obtaining Role definition"
+        Write-Log -Sev 3 -Line (__LINE__) -Msg $ErrorMessage   
     }
+
+    if ($pwdAdminRole -eq $null) {
+        Write-Log -Sev 2 -Line (__LINE__) -Msg "The Password Administrator role is not enabled in the tenant. Enabling it now ..."
+        $pwAdminRoleTemplate = Get-AzureADDirectoryRoleTemplate -ErrorAction SilentlyContinue | Where-Object {$_.DisplayName -eq "Password Administrator"}
+        $pwdAdminRole = Enable-AzureADDirectoryRole -RoleTemplateId $pwAdminRoleTemplate.ObjectId -ErrorAction SilentlyContinue
+    }
+
     Write-Log -Sev 1 -Line (__LINE__) -Msg "Obtaining Application details for", $newResponse.DisplayName
     try {
         $newResponseApp = Get-AzureADServicePrincipal -SearchString $newResponse.DisplayName -ErrorAction SilentlyContinue

@@ -1868,6 +1868,65 @@ Write-Host
 Write-Host -NoNewLine 'Press [Enter] to continue ...'
 $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown')
 
+##########################################################################
+# Microsoft.KeyVault provider validation/registration
+##########################################################################
+
+Clear-Host
+Write-Log -Msg "Microsoft.KeyVault provider validation/registration"
+Write-Host
+Write-Log -Sev 1 -Line (__LINE__) -Msg "Validating if Microsoft.KeyVault provider is registered. If not, will try to register."
+Write-Host
+$azResourceProvider = Get-AzResourceProvider -ProviderNameSpace Microsoft.KeyVault
+$providersCount = $azResourceProvider.Count - 1
+$register = $false
+
+foreach ($i in 0..$providersCount) {
+    $resourceType1 = $azResourceProvider[$i].ResourceTypes.ResourceTypeName
+    $registrationState1 = $azResourceProvider[$i].RegistrationState
+    Write-Log -Sev 1 -Line (__LINE__) -Msg "Provider Namespace:", $resourceType1, " (", $registrationState1, ")"
+    if ($registrationState1 -eq "NotRegistered" -or $registrationState1 -eq "Unregistered") {
+        $register = $true
+    }
+}
+if ($register) {
+    Write-Log -Sev 1 -Line (__LINE__) -Msg "Azure provide Logic is not registered. Will try to register ..."
+    try { $registrationResult = Register-AzResourceProvider -ProviderNamespace Microsoft.KeyVault -ErrorAction Stop }
+    catch {
+        $ErrorMessage = $_.ErrorDetails.Message
+        Write-Log -Sev 3 -Line (__LINE__) -Msg "Something went wrong.", $registrationResult, $ErrorMessage
+        break
+    }
+    Write-Log -Msg "Registering Provider NameSpace Microsoft.KeyVault."
+    Start-Sleep -Seconds 5
+    $azResourceProvider2 = Get-AzResourceProvider -ProviderNameSpace Microsoft.KeyVault
+    foreach ($i in 0..$providersCount) {
+        $registrationState2 = $azResourceProvider2[$i].RegistrationState
+        if ($registrationState2 -eq "Registering") {
+            Write-Log -Sev 1 -Line (__LINE__) -Msg "Registration in progress. Pausing for 5 seconds to validate again."
+            $azResourceProvider2 = Get-AzResourceProvider -ProviderNameSpace Microsoft.KeyVault
+            Start-Sleep -Seconds 5
+            $foreach.Reset()
+        }
+    }
+    Write-Log -Msg "Registration complete."
+    $azResourceProvider3 = Get-AzResourceProvider -ProviderNameSpace Microsoft.KeyVault
+    foreach ($i in 0..$providersCount) {
+        $resourceType3 = $azResourceProvider3[$i].ResourceTypes.ResourceTypeName
+        $registrationState3 = $azResourceProvider3[$i].RegistrationState
+        Write-Log -Sev 1 -Line (__LINE__) -Msg "Provider Namespace:", $resourceType3, " (", $registrationState3, ")"
+    }
+}
+else {
+    Write-Log -Sev 1 -Line (__LINE__) -Msg "Azure provider Microsoft.KeyVault already registered."
+}
+
+Write-Host
+Write-Log -Sev 1 -Line (__LINE__) -Msg "Microsoft.KeyVault provider registration complete."
+Write-Host
+Write-Host -NoNewLine 'Press [Enter] to continue ...'
+$null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown')
+
 #########################################################################
 # Setting up Management partner
 #########################################################################

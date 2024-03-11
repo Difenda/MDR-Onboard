@@ -35,7 +35,7 @@ function Get-ScriptLineNumber { return $MyInvocation.ScriptLineNumber }
 new-item alias:__LINE__ -value Get-ScriptLineNumber
 
 Clear-Host
-Write-Log -Msg "Start processing PowerShell script - v1.0c"
+Write-Log -Msg "Start processing PowerShell script - v1.0d"
 Write-Host
 Write-Log -Sev 1 -Line $(__LINE__) -Msg "Sample informational message"
 Write-Log -Sev 2 -Line $(__LINE__) -Msg "Sample warning message"
@@ -2223,11 +2223,13 @@ $msgTriagePermission3 = New-Object -TypeName "Microsoft.Open.AzureAD.Model.Resou
 $msgTriagePermission4 = New-Object -TypeName "Microsoft.Open.AzureAD.Model.ResourceAccess" -ArgumentList "483bed4a-2ad3-4361-a73b-c83ccdbdc53c","Role" # RoleManagement.Read.Directory
 $msgTriagePermission5 = New-Object -TypeName "Microsoft.Open.AzureAD.Model.ResourceAccess" -ArgumentList "dc5007c0-2d7d-4c42-879c-2dab87571379","Role" # IdentityRiskyUser.Read.All
 $msgTriagePermission6 = New-Object -TypeName "Microsoft.Open.AzureAD.Model.ResourceAccess" -ArgumentList "693c5e45-0940-467d-9b8a-1022fb9d42ef","Role" # Mail.ReadBasic.All
+$msgTriagePermission7 = New-Object -TypeName "Microsoft.Open.AzureAD.Model.ResourceAccess" -ArgumentList "45cc0394-e837-488b-a098-1918f48d186c","Role" # SecurityIncident.Read.All
+$msgTriagePermission8 = New-Object -TypeName "Microsoft.Open.AzureAD.Model.ResourceAccess" -ArgumentList "810c84a8-4a9e-49e6-bf7d-12d183f40d01","Role" # Mail.Read
 
 Write-Log -Sev 1 -Line (__LINE__) -Msg "Creating Microsoft Graph permissions assignment"
 $msgTriageRequiredResourceAccess = New-Object -TypeName "Microsoft.Open.AzureAD.Model.RequiredResourceAccess"
 $msgTriageRequiredResourceAccess.ResourceAppId = '00000003-0000-0000-c000-000000000000'
-$msgTriageRequiredResourceAccess.ResourceAccess = $msgTriagePermission1, $msgTriagePermission2, $msgTriagePermission3, $msgTriagePermission4, $msgTriagePermission5, $msgTriagePermission6
+$msgTriageRequiredResourceAccess.ResourceAccess = $msgTriagePermission1, $msgTriagePermission2, $msgTriagePermission3, $msgTriagePermission4, $msgTriagePermission5, $msgTriagePermission6, $msgTriagePermission7, $msgTriagePermission8
 
 #-----------------------------
 # Required permissions in MDCA

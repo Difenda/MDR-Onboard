@@ -35,7 +35,7 @@ function Get-ScriptLineNumber { return $MyInvocation.ScriptLineNumber }
 new-item alias:__LINE__ -value Get-ScriptLineNumber
 
 Clear-Host
-Write-Log -Msg "Start processing PowerShell script - v1.0d"
+Write-Log -Msg "Start processing PowerShell script - v1.1"
 Write-Host
 Write-Log -Sev 1 -Line $(__LINE__) -Msg "Sample informational message"
 Write-Log -Sev 2 -Line $(__LINE__) -Msg "Sample warning message"
@@ -2320,14 +2320,20 @@ if ($triageSpKeyConfirm -eq 'y') {
 }
 
 if ($triageSpKeyConfirm -eq 'y') {
+
+    Start-Sleep -Seconds 5
+    $getTriageSecret = Get-AzureADApplicationPasswordCredential -ObjectId $newTriage.ObjectId | Where-Object { $_.StartDate -eq $startDate }
+
     $triageSecretStartDate = $triageSecret.StartDate
     $triageSecretEndDate = $triageSecret.EndDate
     $triageSecretValue = $triageSecret.Value
+    $triageSecretId = $getTriageSecret.KeyId
 }
 else {
     $triageSecretStartDate = "Null"
     $triageSecretEndDate = "Null"
     $triageSecretValue = "Null"
+    $triageSecretId = "Null"
 }
 
 Write-Log -Msg "Difenda Triage service principal details"
@@ -2351,6 +2357,7 @@ $triageSpInfoObject = @{
     SecretStart  = $triageSecretStartDate
     SecretEnds = $triageSecretEndDate
     SecretValue = $triageSecretValue
+    SecretId = $triageSecretId
 }
 
 if ($isOt) {
@@ -2493,14 +2500,20 @@ if ($newDevOpsSp -and $newDevOpsApp) {
         }
     }
     if ($devopsSpKeyConfirm -eq 'y') {
+
+        Start-Sleep -Seconds 5
+        $getDevOpsSecret = Get-AzureADApplicationPasswordCredential -ObjectId $newDevOpsApp.ObjectId | Where-Object { $_.StartDate -eq $startDate }
+
         $devopsSecretStartDate = $devopsSecret.StartDate
         $devopsSecretEndDate = $devopsSecret.EndDate
         $devopsSecretValue = $devopsSecret.Value
+        $devopsSecretId = $getDevOpsSecret.KeyId
     }
     else {
         $devopsSecretStartDate = "Null"
         $devopsSecretEndDate = "Null"
         $devopsSecretValue = "Null"
+        $devopsSecretId = "Null"
     }
 }
 else {
@@ -2672,6 +2685,7 @@ $devopsInfoObject = @{
     SecretStart  = $devopsSecretStartDate
     SecretEnds = $devopsSecretEndDate
     SecretValue = $devopsSecretValue
+    SecretId = $devopsSecretId
 }
 
 Write-Host
@@ -2853,14 +2867,20 @@ if ($responseSpKeyConfirm -eq 'y') {
 }
 
 if ($responseSpKeyConfirm -eq 'y') {
+
+    Start-Sleep -Seconds 5
+    $getResponseSecret = Get-AzureADApplicationPasswordCredential -ObjectId $newResponse.ObjectId | Where-Object { $_.StartDate -eq $startDate }
+
     $responseSecretStartDate = $responseSecret.StartDate
     $responseSecretEndDate = $responseSecret.EndDate
     $responseSecretValue = $responseSecret.Value
+    $responseSecretId = $getResponseSecret.KeyId
 }
 else {
     $responseSecretStartDate = "Null"
     $responseSecretEndDate = "Null"
     $responseSecretValue = "Null"
+    $responseSecretId = "Null"
 }
 
 Write-Log -Msg "Difenda Response service principal details"
@@ -2884,6 +2904,7 @@ $responseSpInfoObject = @{
     SecretStart  = $responseSecretStartDate
     SecretEnds = $responseSecretEndDate
     SecretValue = $responseSecretValue
+    SecretId = $responseSecretId
 }
 
 if ($isOt) {
@@ -3093,14 +3114,20 @@ if ($isavm) {
         }
     }
     if ($avmSpKeyConfirm -eq 'y') {
+
+        Start-Sleep -Seconds 5
+        $getAvmSecret = Get-AzureADApplicationPasswordCredential -ObjectId $newAvm.ObjectId | Where-Object { $_.StartDate -eq $startDate }
+
         $avmSecretStartDate = $avmSecret.StartDate
         $avmSecretEndDate = $avmSecret.EndDate
         $avmSecretValue = $avmSecret.Value
+        $avmSecretId = $getAvmSecret.KeyId
     }
     else {
         $avmSecretStartDate = "Null"
         $avmSecretEndDate = "Null"
         $avmSecretValue = "Null"
+        $avmSecretId = "Null"
     }
 
     Write-Log -Msg "Difenda AVM service principal details"
@@ -3124,6 +3151,7 @@ if ($isavm) {
         SecretStart  = $avmSecretStartDate
         SecretEnds = $avmSecretEndDate
         SecretValue = $avmSecretValue
+        SecretId = $avmSecretId
     }
     
     Write-Log -Sev 1 -Line (__LINE__) -Msg "AVM Service principal setup complete."

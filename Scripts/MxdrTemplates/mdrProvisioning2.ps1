@@ -1931,46 +1931,46 @@ $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown')
 # Setting up Management partner
 #########################################################################
 
-Clear-Host
-Write-Log -Msg "Setting up Partner Id"
-Write-Host
-Write-Log -Sev 1 -Line $(__LINE__) -Msg "Obtaining existing management partner information"
-Write-Host
-try { $partner = Get-AzManagementPartner -ErrorAction Stop}
-catch {
-    if ($_) {
-        Write-Log -Sev 2 -Line $(__LINE__) -Msg "No management partner information found"
-    }
-}
-if ($partner) {
-    Write-Log -Sev 1 -Line $(__LINE__) -Msg "Management partner already assigned"
-    if ($partner.PartnerId -eq '4914876') {
-        Write-Log -Sev 1 -Line $(__LINE__) -Msg $partner.PartnerName, "(", $partner.PartnerId, ")"
-    }
-    else {
-        Write-Log -Sev 1 -Line $(__LINE__) -Msg "Partner ID was ->", $partner.PartnerName, "(", $partner.PartnerId, ")"
-        Write-Log -Sev 1 -Line $(__LINE__) -Msg "Updating Partner ID"
-        $partner = Update-AzManagementPartner -PartnerId '4914876'
-        Write-Log -Sev 1 -Line $(__LINE__) -Msg "Management partner updated. New partner ->", $partner.PartnerName, "(", $partner.PartnerId, ")"
-    }
-}
-else {
-    Write-Log -Sev 1 -Line $(__LINE__) -Msg "Assigning management partner"
-    Write-Log -Sev 1 -Line $(__LINE__) -Msg "Assigning Partner ID"
-    $partner = New-AzManagementPartner -PartnerId '4914876'
-    if ($partner.State -eq 'Active') { 
-        Write-Log -Sev 1 -Line $(__LINE__) -Msg "Assigned partner ID ->", $partner.PartnerName, "(", $partner.PartnerId, ")"
-    }
-    else {
-        Write-Log -Sev 2 -Line $(__LINE__) -Msg "Failed assigning Partner ID"
-    }
-}
+# Clear-Host
+# Write-Log -Msg "Setting up Partner Id"
+# Write-Host
+# Write-Log -Sev 1 -Line $(__LINE__) -Msg "Obtaining existing management partner information"
+# Write-Host
+# try { $partner = Get-AzManagementPartner -ErrorAction Stop}
+# catch {
+#     if ($_) {
+#         Write-Log -Sev 2 -Line $(__LINE__) -Msg "No management partner information found"
+#     }
+# }
+# if ($partner) {
+#     Write-Log -Sev 1 -Line $(__LINE__) -Msg "Management partner already assigned"
+#     if ($partner.PartnerId -eq '4914876') {
+#         Write-Log -Sev 1 -Line $(__LINE__) -Msg $partner.PartnerName, "(", $partner.PartnerId, ")"
+#     }
+#     else {
+#         Write-Log -Sev 1 -Line $(__LINE__) -Msg "Partner ID was ->", $partner.PartnerName, "(", $partner.PartnerId, ")"
+#         Write-Log -Sev 1 -Line $(__LINE__) -Msg "Updating Partner ID"
+#         $partner = Update-AzManagementPartner -PartnerId '4914876'
+#         Write-Log -Sev 1 -Line $(__LINE__) -Msg "Management partner updated. New partner ->", $partner.PartnerName, "(", $partner.PartnerId, ")"
+#     }
+# }
+# else {
+#     Write-Log -Sev 1 -Line $(__LINE__) -Msg "Assigning management partner"
+#     Write-Log -Sev 1 -Line $(__LINE__) -Msg "Assigning Partner ID"
+#     $partner = New-AzManagementPartner -PartnerId '4914876'
+#     if ($partner.State -eq 'Active') { 
+#         Write-Log -Sev 1 -Line $(__LINE__) -Msg "Assigned partner ID ->", $partner.PartnerName, "(", $partner.PartnerId, ")"
+#     }
+#     else {
+#         Write-Log -Sev 2 -Line $(__LINE__) -Msg "Failed assigning Partner ID"
+#     }
+# }
 
-Write-Host
-Write-Log -Sev 1 -Line (__LINE__) -Msg "Management partner setup complete."
-Write-Host
-Write-Host -NoNewLine 'Press [Enter] to continue ...'
-$null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown')
+# Write-Host
+# Write-Log -Sev 1 -Line (__LINE__) -Msg "Management partner setup complete."
+# Write-Host
+# Write-Host -NoNewLine 'Press [Enter] to continue ...'
+# $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown')
 
 #########################################################################
 # Creation of Sentinel Resource group

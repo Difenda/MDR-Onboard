@@ -395,10 +395,10 @@ if ($null -eq $location -or $confirmRegion -eq 'n') {
             $global:x=0
             $locationsIndex = 0
             $azLocations | Where-Object { $_.GeographyGroup -eq $regionName } | Sort-Object DisplayName | Select-Object @{ Name="Item";Expression={ $global:x++;$global:x } }, DisplayName, Location, RegionType, PhysicalLocation -OutVariable locationMenu | Format-Table -AutoSize
-            while ($locationsIndex -eq 0 -or $locationsIndex -gt $x) {
+            while ($locationsIndex -eq 0 -or $locationsIndex -gt $global:x) {
                 Write-Host
                 $locationsIndex = Read-Host "Select the Azure location to deploy MXDR resources "
-                Write-Host "locationIndex=$locationsIndex -- x=$x"
+                Write-Host "locationIndex=$locationsIndex -- x=$global:x"
             }
             $selectedLocation = $locationMenu | Where-Object { $_.Item -eq $locationsIndex }
             Write-Host

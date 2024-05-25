@@ -398,7 +398,7 @@ if ($null -eq $location -or $confirmRegion -eq 'n') {
             while ($locationsIndex -eq 0 -or $locationsIndex -gt $global:x) {
                 Write-Host
                 $locationsIndex = Read-Host "Select the Azure location to deploy MXDR resources "
-                Write-Host "locationIndex=$locationsIndex -- x=$global:x"
+                Write-Host "locationIndex=$locationsIndex -- x=$global:x -->" + $locationsIndex.GetType
             }
             $selectedLocation = $locationMenu | Where-Object { $_.Item -eq $locationsIndex }
             Write-Host

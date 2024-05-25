@@ -374,7 +374,7 @@ if ($null -eq $location -or $confirmRegion -eq 'n') {
             $regionsIndex = 0
             $azLocations | Group-Object -Property GeographyGroup | Sort-Object GeographyGroup | Select-Object @{ Name="Item";Expression={ $global:i++;$global:i } }, Name -OutVariable regionMenu | Format-Table -AutoSize
             while ($regionsIndex -eq 0 -or $regionsIndex -gt $i) {
-                $regionsIndex = Read-Host "Select the Azure region to deploy MXDR resources "
+                $regionsIndex = [int] (Read-Host "Select the Azure region to deploy MXDR resources ")
             }
             $selectedRegion = $regionMenu | Where-Object { $_.Item -eq $regionsIndex }
             Write-Host
@@ -396,9 +396,7 @@ if ($null -eq $location -or $confirmRegion -eq 'n') {
             $locationsIndex = 0
             $azLocations | Where-Object { $_.GeographyGroup -eq $regionName } | Sort-Object DisplayName | Select-Object @{ Name="Item";Expression={ $global:x++;$global:x } }, DisplayName, Location, RegionType, PhysicalLocation -OutVariable locationMenu | Format-Table -AutoSize
             while ($locationsIndex -eq 0 -or $locationsIndex -gt $global:x) {
-                Write-Host
                 $locationsIndex = [int] (Read-Host "Select the Azure location to deploy MXDR resources ")
-                Write-Host "locationIndex=$locationsIndex -- x=$global:x -->" + $locationsIndex.GetType
             }
             $selectedLocation = $locationMenu | Where-Object { $_.Item -eq $locationsIndex }
             Write-Host

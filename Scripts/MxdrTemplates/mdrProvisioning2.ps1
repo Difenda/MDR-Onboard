@@ -35,7 +35,7 @@ function Get-ScriptLineNumber { return $MyInvocation.ScriptLineNumber }
 new-item alias:__LINE__ -value Get-ScriptLineNumber
 
 Clear-Host
-Write-Log -Msg "Start processing PowerShell script - v1.1"
+Write-Log -Msg "Start processing PowerShell script - v1.2"
 Write-Host
 Write-Log -Sev 1 -Line $(__LINE__) -Msg "Sample informational message"
 Write-Log -Sev 2 -Line $(__LINE__) -Msg "Sample warning message"
@@ -81,8 +81,6 @@ else {
 # Instructions message
 ############################################################################################################
 
-# Write-Host "This is the instructions message ..."
-# Write-Host "Add instructions HERE !!!"
 Write-Host
 Write-Host -NoNewLine 'Press [Enter] to start ...'
 $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown')
@@ -374,7 +372,7 @@ if ($null -eq $location -or $confirmRegion -eq 'n') {
             $regionsIndex = 0
             $azLocations | Group-Object -Property GeographyGroup | Sort-Object GeographyGroup | Select-Object @{ Name="Item";Expression={ $global:i++;$global:i } }, Name -OutVariable regionMenu | Format-Table -AutoSize
             while ($regionsIndex -eq 0 -or $regionsIndex -gt $i) {
-                $regionsIndex = Read-Host "Select the Azure region to deploy MXDR resources "
+                $regionsIndex = [int] (Read-Host "Select the Azure region to deploy MXDR resources ")
             }
             $selectedRegion = $regionMenu | Where-Object { $_.Item -eq $regionsIndex }
             Write-Host
@@ -395,8 +393,8 @@ if ($null -eq $location -or $confirmRegion -eq 'n') {
             $global:x=0
             $locationsIndex = 0
             $azLocations | Where-Object { $_.GeographyGroup -eq $regionName } | Sort-Object DisplayName | Select-Object @{ Name="Item";Expression={ $global:x++;$global:x } }, DisplayName, Location, RegionType, PhysicalLocation -OutVariable locationMenu | Format-Table -AutoSize
-            while ($locationsIndex -eq 0 -or $locationsIndex -gt $x) {
-                $locationsIndex = Read-Host "Select the Azure location to deploy MXDR resources "
+            while ($locationsIndex -eq 0 -or $locationsIndex -gt $global:x) {
+                $locationsIndex = [int] (Read-Host "Select the Azure location to deploy MXDR resources ")
             }
             $selectedLocation = $locationMenu | Where-Object { $_.Item -eq $locationsIndex }
             Write-Host
@@ -1117,7 +1115,112 @@ Write-Host -NoNewLine 'Press [Enter] to continue ...'
 $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown')
 
 ############################################################################################################
-# Obtaining informatio for OT customers
+# Obtaining RIR Service principal information
+############################################################################################################
+
+Clear-Host
+Write-Host
+Write-Log -Msg 'Enter the information required for Difenda Remote Incident Response (RIR) service.'
+
+$confirmationRirSp = $null
+$confirmationRir = $null
+$rir = $null
+$compareValue = 0
+$isrir = $false
+
+if ($parameterCount -gt $compareValue) {
+    try { $isrir = $( $paramsObject | Select-Object -ExpandProperty "IsRirSubscriber" -ErrorAction Stop ) }
+    catch {
+        $ErrorMessage = $_.Exception.Message
+    }
+}
+if ($isrir) {
+    Write-Host
+    Write-Log -Sev 1 -Line (__LINE__) -Msg "$company is RIR Subscriber."
+    $confirmationRir = 'y'
+}
+else {
+    while ($confirmationRir -ne 'y' -and $confirmationRir -ne 'n') {
+        Write-Host
+        $confirmationRir = Read-Host "Is $company subscribed to Difenda's Remote Incident Response (RIR) Service? [Y/N] "
+    }
+    if ($confirmationRir -eq 'y') { $isrir = $true }
+    else { $isrir = $false }  
+}
+
+if ($isrir) {
+    while($confirmationRirSp -ne 'y') {
+        while ($null -eq $rir) {
+            if ($parameterCount -gt $compareValue) {
+                try { $rir = $( $paramsObject | Select-Object -ExpandProperty "RirServicePrincipal" -ErrorAction Stop ) }
+                catch {
+                    $ErrorMessage = $_.Exception.Message
+                    $compareValue = 100
+                }
+            }
+            else {
+                Write-Host
+                $rir = Read-Host 'Enter a name for the RIR Service principal to be created '
+            }
+        }
+        while ($rir -and $confirmationRirSp -ne 'y' -and $confirmationRirSp -ne 'n') {
+            Write-Host
+            $confirmationRirSp = Read-Host "Please confirm you want to use $rir as the name for the RIR Service principal [Y/N] "
+        }
+        if ($confirmationRirSp -eq 'y') {
+            try { $RirSpInfo = Get-AzureADApplication -All $true -ErrorAction SilentlyContinue | Where-Object { $_.DisplayName -eq $rir } }
+            catch {
+                $ErrorMessage = $_.Exception.Message
+                Write-Log -Sev 3 -Line (__LINE__) -Msg "There was a problem validating the RIR Service principal."
+                Write-Log -Sev 3 -Line (__LINE__) -Msg $ErrorMessage
+            }
+            if ($RirSpInfo) {
+                if ($RirSpInfo.Length -gt 1) {
+                    Write-Log -Sev 3 -Line (__LINE__) -Msg "Multiple Service principal found with name : $rir"
+                    Write-Log -Sev 3 -Line (__LINE__) -Msg "Please correct and execute the scipt again."
+                    Exit
+                }
+                $confirmationRirSp = $null
+                $rirSpExists = $true
+                while ($rir -and $confirmationRirSp -ne 'y' -and $confirmationRirSp -ne 'n') {
+                    Write-Host
+                    Write-Log -Sev 2 -Line (__LINE__) -Msg "A Service principal with the same name has been found in the tenant."
+                    Write-Host
+                    $confirmationRirSp = Read-Host "Do you want to use this Service principal : $rir ? [Y/N] "
+                    Write-Host
+                }
+                if ($confirmationRirSp -eq 'y') {
+                    Write-Log -Sev 1 -Line (__LINE__) -Msg "RIR Service principal", $RirSpInfo.DisplayName, "( App ID:", $RirSpInfo.AppId, ")"
+                    $rirSpExists = $true
+                }
+                else {
+                    $confirmationRirSp = $null
+                    $rir = $null
+                    $compareValue = 100
+                }
+            }
+            else {
+                $rirSpExists = $false
+            }
+        }
+        else {
+            $confirmationRirSp = $null
+            $rir = $null
+            $compareValue = 100
+        }
+    }
+}
+
+$paramsObject | Add-Member -NotePropertyMembers $(@{IsRirSubscriber = $isrir}) -Force
+$paramsObject | Add-Member -NotePropertyMembers $(@{RirServicePrincipal = $rir}) -Force
+$paramsObject | ConvertTo-Json -Depth 100 | Out-File $paramsFilePath
+
+Write-Host
+Write-Host -NoNewLine 'Press [Enter] to continue ...'
+$null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown')
+
+############################################################################################################
+# Obtaining information for OT customers
 ############################################################################################################
 
 Clear-Host
@@ -1225,85 +1328,10 @@ $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown')
 ############################################################################################################
 
 $groupSso1 = $company + " - IT Security Team"
-$groupSso2 = $company + " - High Priority Alert Group"
-$groupSso3 = $company + " - No Alert Group"
 $groupSecOps = "DifendaMXDR_SecOps"
 
 $paramsObject | Add-Member -NotePropertyMembers $(@{ItSecurityGroup = $groupSso1}) -Force
-$paramsObject | Add-Member -NotePropertyMembers $(@{HpiAlertsGroup = $groupSso2}) -Force
-$paramsObject | Add-Member -NotePropertyMembers $(@{NoAlertsGroup = $groupSso3}) -Force
 $paramsObject | ConvertTo-Json -Depth 100 | Out-File $paramsFilePath
-
-############################################################################################################
-# Set Key vault name (To be created in Sentinel Resource group)
-############################################################################################################
-
-# Clear-Host
-# Write-Host
-# Write-Log -Msg "Additional resources"
-# Write-Host
-# Write-Host "The following additional supporting resources will be created in the tenant."
-# Write-Host
-# $KeyVaultName = $null
-
-# if ($parameterCount -gt $compareValue) {
-#     try { $KeyVaultName = $( $paramsObject | Select-Object -ExpandProperty "KeyVaultName" -ErrorAction Stop ) }
-#     catch {
-#         $ErrorMessage = $_.Exception.Message
-#     }
-# }
-
-# if ($KeyVaultName) {
-#     Write-Host "   1. A Key Vault with the name $KeyVaultName will be created in the Sentinel Resource group $rgSentinel."
-# }
-# else {
-#     $TokenSet = @{
-#         U = [Char[]]'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-#         L = [Char[]]'abcdefghijklmnopqrstuvwxyz'
-#         N = [Char[]]'0123456789'
-#     }
-    
-#     $Upper = Get-Random -Count 5 -InputObject $TokenSet.U
-#     $Lower = Get-Random -Count 5 -InputObject $TokenSet.L
-#     $Number = Get-Random -Count 5 -InputObject $TokenSet.N
-    
-#     $StringSet = $Upper + $Lower + $Number
-#     $Sufix = (Get-Random -Count 21 -InputObject $StringSet) -join ''
-#     $KeyVaultName = "kv-" + $Sufix
-#     Write-Host "   1. A Key Vault with the name $KeyVaultName will be created in the Sentinel Resource group $rgSentinel."
-# }
-
-# $paramsObject | Add-Member -NotePropertyMembers $(@{KeyVaultName = $KeyVaultName}) -Force
-# $paramsObject | ConvertTo-Json -Depth 100 | Out-File $paramsFilePath
-
-############################################################################################################
-# Set User Assigned Managed Identity name (To be created in Sentinel Resource group)
-############################################################################################################
-
-# $UamiName = $null
-# Write-Host
-
-# if ($parameterCount -gt $compareValue) {
-#     try { $UamiName = $( $paramsObject | Select-Object -ExpandProperty "ManagedIdentityName" -ErrorAction Stop ) }
-#     catch {
-#         $ErrorMessage = $_.Exception.Message
-#     }
-# }
-
-# if ($UamiName) {
-#     Write-Host "   2. A User Assigned Managed Identity with the name $UamiName will be created in the Sentinel Resource group $rgSentinel."
-# }
-# else {
-#     $UamiName = "uai-" + $Sufix
-#     Write-Host "   2. A User Assigned Managed Identity with the name $UamiName will be created in the Sentinel Resource group $rgSentinel."
-# }
-
-# $paramsObject | Add-Member -NotePropertyMembers $(@{ManagedIdentityName = $UamiName}) -Force
-# $paramsObject | ConvertTo-Json -Depth 100 | Out-File $paramsFilePath
-
-# Write-Host
-# Write-Host -NoNewLine 'Press [Enter] to continue ...'
-# $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown')
 
 ############################################################################################################
 # Obtaining encryption Key
@@ -1495,6 +1523,10 @@ Write-Log -Sev 1 -Line $(__LINE__) -Msg "DevOps Service principal name          
 if ($isavm) {
     Write-Log -Sev 1 -Line $(__LINE__) -Msg "AVM Service principal name              : $avm (Service principal exists: $avmSpExists)"
 }
+if ($isrir) {
+    Write-Log -Sev 1 -Line $(__LINE__) -Msg "RIR Service principal name              : $rir (Service principal exists: $rirSpExists)"
+}
+
 if ($locationDisplayName) {
     $resourcesLocation = $locationDisplayName, "(", $location, ")"
 }
@@ -1509,13 +1541,8 @@ Write-Log -Sev 1 -Line $(__LINE__) -Msg "L1 Group Id                            
 Write-Log -Sev 1 -Line $(__LINE__) -Msg "L2 Group Id                             : $L2GroupId"
 Write-Log -Sev 1 -Line $(__LINE__) -Msg "Reader Group Id                         : $ReaderGroupId"
 Write-Host
-Write-Log -Sev 1 -Line $(__LINE__) -Msg "AAD Group for Regular notifications     : $groupSso1"
-Write-Log -Sev 1 -Line $(__LINE__) -Msg "AAD Group for HPI notifications         : $groupSso2"
-Write-Log -Sev 1 -Line $(__LINE__) -Msg "AAD Group for No notifications          : $groupSso3"
+Write-Log -Sev 1 -Line $(__LINE__) -Msg "AAD Group for Single Sign-On            : $groupSso1"
 Write-Log -Sev 1 -Line $(__LINE__) -Msg "AAD Group for SecOps Access             : $groupSecOps"
-# Write-Host
-# Write-Log -Sev 1 -Line $(__LINE__) -Msg "Azure Key Vault name                    : $KeyVaultName"
-# Write-Log -Sev 1 -Line $(__LINE__) -Msg "User Assigned Managed Identity          : $UamiName"
 Write-Host
 Write-Log -Sev 1 -Line $(__LINE__) -Msg "Difenda Engineer email address          : $c3Email"
 Write-Host
@@ -1931,46 +1958,46 @@ $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown')
 # Setting up Management partner
 #########################################################################
 
-# Clear-Host
-# Write-Log -Msg "Setting up Partner Id"
-# Write-Host
-# Write-Log -Sev 1 -Line $(__LINE__) -Msg "Obtaining existing management partner information"
-# Write-Host
-# try { $partner = Get-AzManagementPartner -ErrorAction Stop}
-# catch {
-#     if ($_) {
-#         Write-Log -Sev 2 -Line $(__LINE__) -Msg "No management partner information found"
-#     }
-# }
-# if ($partner) {
-#     Write-Log -Sev 1 -Line $(__LINE__) -Msg "Management partner already assigned"
-#     if ($partner.PartnerId -eq '4914876') {
-#         Write-Log -Sev 1 -Line $(__LINE__) -Msg $partner.PartnerName, "(", $partner.PartnerId, ")"
-#     }
-#     else {
-#         Write-Log -Sev 1 -Line $(__LINE__) -Msg "Partner ID was ->", $partner.PartnerName, "(", $partner.PartnerId, ")"
-#         Write-Log -Sev 1 -Line $(__LINE__) -Msg "Updating Partner ID"
-#         $partner = Update-AzManagementPartner -PartnerId '4914876'
-#         Write-Log -Sev 1 -Line $(__LINE__) -Msg "Management partner updated. New partner ->", $partner.PartnerName, "(", $partner.PartnerId, ")"
-#     }
-# }
-# else {
-#     Write-Log -Sev 1 -Line $(__LINE__) -Msg "Assigning management partner"
-#     Write-Log -Sev 1 -Line $(__LINE__) -Msg "Assigning Partner ID"
-#     $partner = New-AzManagementPartner -PartnerId '4914876'
-#     if ($partner.State -eq 'Active') { 
-#         Write-Log -Sev 1 -Line $(__LINE__) -Msg "Assigned partner ID ->", $partner.PartnerName, "(", $partner.PartnerId, ")"
-#     }
-#     else {
-#         Write-Log -Sev 2 -Line $(__LINE__) -Msg "Failed assigning Partner ID"
-#     }
-# }
+Clear-Host
+Write-Log -Msg "Setting up Partner Id"
+Write-Host
+Write-Log -Sev 1 -Line $(__LINE__) -Msg "Obtaining existing management partner information"
+Write-Host
+try { $partner = Get-AzManagementPartner -ErrorAction Stop}
+catch {
+    if ($_) {
+        Write-Log -Sev 2 -Line $(__LINE__) -Msg "No management partner information found"
+    }
+}
+if ($partner) {
+    Write-Log -Sev 1 -Line $(__LINE__) -Msg "Management partner already assigned"
+    if ($partner.PartnerId -eq '4914876') {
+        Write-Log -Sev 1 -Line $(__LINE__) -Msg $partner.PartnerName, "(", $partner.PartnerId, ")"
+    }
+    else {
+        Write-Log -Sev 1 -Line $(__LINE__) -Msg "Partner ID was ->", $partner.PartnerName, "(", $partner.PartnerId, ")"
+        Write-Log -Sev 1 -Line $(__LINE__) -Msg "Updating Partner ID"
+        $partner = Update-AzManagementPartner -PartnerId '4914876'
+        Write-Log -Sev 1 -Line $(__LINE__) -Msg "Management partner updated. New partner ->", $partner.PartnerName, "(", $partner.PartnerId, ")"
+    }
+}
+else {
+    Write-Log -Sev 1 -Line $(__LINE__) -Msg "Assigning management partner"
+    Write-Log -Sev 1 -Line $(__LINE__) -Msg "Assigning Partner ID"
+    $partner = New-AzManagementPartner -PartnerId '4914876'
+    if ($partner.State -eq 'Active') { 
+        Write-Log -Sev 1 -Line $(__LINE__) -Msg "Assigned partner ID ->", $partner.PartnerName, "(", $partner.PartnerId, ")"
+    }
+    else {
+        Write-Log -Sev 2 -Line $(__LINE__) -Msg "Failed assigning Partner ID"
+    }
+}
 
-# Write-Host
-# Write-Log -Sev 1 -Line (__LINE__) -Msg "Management partner setup complete."
-# Write-Host
-# Write-Host -NoNewLine 'Press [Enter] to continue ...'
-# $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown')
+Write-Host
+Write-Log -Sev 1 -Line (__LINE__) -Msg "Management partner setup complete."
+Write-Host
+Write-Host -NoNewLine 'Press [Enter] to continue ...'
+$null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown')
 
 #########################################################################
 # Creation of Sentinel Resource group
@@ -2224,7 +2251,7 @@ $msgTriagePermission4 = New-Object -TypeName "Microsoft.Open.AzureAD.Model.Resou
 $msgTriagePermission5 = New-Object -TypeName "Microsoft.Open.AzureAD.Model.ResourceAccess" -ArgumentList "dc5007c0-2d7d-4c42-879c-2dab87571379","Role" # IdentityRiskyUser.Read.All
 $msgTriagePermission6 = New-Object -TypeName "Microsoft.Open.AzureAD.Model.ResourceAccess" -ArgumentList "693c5e45-0940-467d-9b8a-1022fb9d42ef","Role" # Mail.ReadBasic.All
 $msgTriagePermission7 = New-Object -TypeName "Microsoft.Open.AzureAD.Model.ResourceAccess" -ArgumentList "45cc0394-e837-488b-a098-1918f48d186c","Role" # SecurityIncident.Read.All
-$msgTriagePermission8 = New-Object -TypeName "Microsoft.Open.AzureAD.Model.ResourceAccess" -ArgumentList "810c84a8-4a9e-49e6-bf7d-12d183f40d01","Role" # Mail.Read
+$msgTriagePermission8 = New-Object -TypeName "Microsoft.Open.AzureAD.Model.ResourceAccess" -ArgumentList "9a5d68dd-52b0-4cc2-bd40-abcf44ac3a30","Role" # Application.Read.All
 
 Write-Log -Sev 1 -Line (__LINE__) -Msg "Creating Microsoft Graph permissions assignment"
 $msgTriageRequiredResourceAccess = New-Object -TypeName "Microsoft.Open.AzureAD.Model.RequiredResourceAccess"
@@ -2411,8 +2438,6 @@ if ($isOt) {
     }
 
 }
-
-
 
 Write-Log -Sev 1 -Line (__LINE__) -Msg "Triage Service principal setup complete."
 
@@ -3171,6 +3196,198 @@ if ($isavm) {
 }
 
 #########################################################################
+# RIR service principal section
+#########################################################################
+if ($isrir) { 
+
+    Clear-Host
+    Write-Log -Msg "Difenda RIR service principal section"
+    Write-Host
+    Write-Log -Sev 1 -Line (__LINE__) -Msg "Using RIR service principal name:", $rir
+    Write-Log -Sev 1 -Line (__LINE__) -Msg "Creating permissions object for Difenda RIR service principal"
+
+    #--------------------------------------------
+    # Required permissions in Microsoft Graph API
+    #--------------------------------------------
+    Write-Log -Sev 1 -Line (__LINE__) -Msg "Building permissions object for Microsoft Graph API"
+    $rirMsgPermission1 = New-Object -TypeName "Microsoft.Open.AzureAD.Model.ResourceAccess" -ArgumentList "40f97065-369a-49f4-947c-6a255697ae91","Role" # MailboxSettings.Read
+    $rirMsgPermission2 = New-Object -TypeName "Microsoft.Open.AzureAD.Model.ResourceAccess" -ArgumentList "df021288-bdef-4463-88db-98f22de89214","Role" # User.Read.All
+    $rirMsgPermission3 = New-Object -TypeName "Microsoft.Open.AzureAD.Model.ResourceAccess" -ArgumentList "483bed4a-2ad3-4361-a73b-c83ccdbdc53c","Role" # RoleManagement.Read.Directory
+    $rirMsgPermission4 = New-Object -TypeName "Microsoft.Open.AzureAD.Model.ResourceAccess" -ArgumentList "693c5e45-0940-467d-9b8a-1022fb9d42ef","Role" # Mail.ReadBasic.All
+    $rirMsgPermission5 = New-Object -TypeName "Microsoft.Open.AzureAD.Model.ResourceAccess" -ArgumentList "7438b122-aefc-4978-80ed-43db9fcc7715","Role" # Device.Read.All
+    $rirMsgPermission6 = New-Object -TypeName "Microsoft.Open.AzureAD.Model.ResourceAccess" -ArgumentList "5b567255-7703-4780-807c-7be8301ae99b","Role" # Group.Read.All
+    $rirMsgPermission7 = New-Object -TypeName "Microsoft.Open.AzureAD.Model.ResourceAccess" -ArgumentList "98830695-27a2-44f7-8c18-0c3ebc9698f6","Role" # GroupMember.Read.All
+    $rirMsgPermission8 = New-Object -TypeName "Microsoft.Open.AzureAD.Model.ResourceAccess" -ArgumentList "bf394140-e372-4bf9-a898-299cfc7564e5","Role" # SecurityEvents.Read.All
+    $rirMsgPermission9 = New-Object -TypeName "Microsoft.Open.AzureAD.Model.ResourceAccess" -ArgumentList "7ab1d382-f21e-4acd-a863-ba3e13f7da61","Role" # Directory.Read.All
+    $rirMsgPermission10 = New-Object -TypeName "Microsoft.Open.AzureAD.Model.ResourceAccess" -ArgumentList "c7fbd983-d9aa-4fa7-84b8-17382c103bc4","Role" # RoleManagement.Read.All
+    $rirMsgPermission11 = New-Object -TypeName "Microsoft.Open.AzureAD.Model.ResourceAccess" -ArgumentList "5e1e9171-754d-478c-812c-f1755a9a4c2d","Role" # AuditLogsQuery.Read.All
+    $rirMsgPermission12 = New-Object -TypeName "Microsoft.Open.AzureAD.Model.ResourceAccess" -ArgumentList "b0afded3-3588-46d8-8b3d-9842eff778da","Role" # AuditLog.Read.All
+    $rirMsgPermission13 = New-Object -TypeName "Microsoft.Open.AzureAD.Model.ResourceAccess" -ArgumentList "21792b6c-c986-4ffc-85de-df9da54b52fa","Role" # ThreatIndicators.ReadWrite.OwnedBy
+
+    Write-Log -Sev 1 -Line (__LINE__) -Msg "Creating Microsoft Graph permissions assignment"
+    $RirMsg = New-Object -TypeName "Microsoft.Open.AzureAD.Model.RequiredResourceAccess"
+    $RirMsg.ResourceAppId = '00000003-0000-0000-c000-000000000000'
+    $RirMsg.ResourceAccess = $rirMsgPermission1, $rirMsgPermission2, $rirMsgPermission3, $rirMsgPermission4, $rirMsgPermission5, $rirMsgPermission6, $rirMsgPermission7, $rirMsgPermission8, $rirMsgPermission9, $rirMsgPermission10, $rirMsgPermission11, $rirMsgPermission12, $rirMsgPermission13
+
+    #--------------------------------------------------------------------
+    # Required permissions in Microsoft Threat Protection (M365 Defender)
+    #--------------------------------------------------------------------
+    Write-Log -Sev 1 -Line (__LINE__) -Msg "Building permissions object for Microsoft Threat Protection API"
+    $rirMtpPermission1 = New-Object -TypeName "Microsoft.Open.AzureAD.Model.ResourceAccess" -ArgumentList "7734e8e5-8dde-42fc-b5ae-6eafea078693","Role" # AdvancedHunting.Read.All
+
+    Write-Log -Sev 1 -Line (__LINE__) -Msg "Creating MTP permissions assignment"
+    $RirMtp = New-Object -TypeName "Microsoft.Open.AzureAD.Model.RequiredResourceAccess"
+    $RirMtp.ResourceAppId = '8ee8fdad-f234-4243-8f3b-15c294843740'
+    $RirMtp.ResourceAccess = $rirMtpPermission1
+
+    #---------------------------------------------------------------------------------------------------------------------------------------------------------------
+    # Required permissions in Microsoft Defender for Endpoint API (WindowsDefenderATP - Microsoft Threat and Vulnerability Management to Difenda Shield integration)
+    #---------------------------------------------------------------------------------------------------------------------------------------------------------------
+    Write-Log -Sev 1 -Line (__LINE__) -Msg "Building permissions object for MDE API"
+    $rirAtpPermission1 = New-Object -TypeName "Microsoft.Open.AzureAD.Model.ResourceAccess" -ArgumentList "93489bf5-0fbc-4f2d-b901-33f2fe08ff05","Role" # AdvancedQuery.Read.All
+    $rirAtpPermission2 = New-Object -TypeName "Microsoft.Open.AzureAD.Model.ResourceAccess" -ArgumentList "a833834a-4cf1-4732-8acf-bbcfa13fb610","Role" # User.Read.All
+    $rirAtpPermission3 = New-Object -TypeName "Microsoft.Open.AzureAD.Model.ResourceAccess" -ArgumentList "ea8291d3-4b9a-44b5-bc3a-6cea3026dc79","Role" # Machine.Read.All
+    $rirAtpPermission4 = New-Object -TypeName "Microsoft.Open.AzureAD.Model.ResourceAccess" -ArgumentList "41269fc5-d04d-4bfd-bce7-43a51cea049a","Role" # Vulnerability.Read.All
+    $rirAtpPermission5 = New-Object -TypeName "Microsoft.Open.AzureAD.Model.ResourceAccess" -ArgumentList "02b005dd-f804-43b4-8fc7-078460413f74","Role" # Score.Read.All
+    $rirAtpPermission6 = New-Object -TypeName "Microsoft.Open.AzureAD.Model.ResourceAccess" -ArgumentList "227f2ea0-c2c2-4428-b7af-9ff40f1a720e","Role" # SecurityConfiguration.Read.All
+    $rirAtpPermission7 = New-Object -TypeName "Microsoft.Open.AzureAD.Model.ResourceAccess" -ArgumentList "37f71c98-d198-41ae-964d-2c49aab74926","Role" # Software.Read.All
+    $rirAtpPermission8 = New-Object -TypeName "Microsoft.Open.AzureAD.Model.ResourceAccess" -ArgumentList "a86d9824-b2b6-45f8-b042-16bc4922ed4e","Role" # Machine.Scan
+    $rirAtpPermission9 = New-Object -TypeName "Microsoft.Open.AzureAD.Model.ResourceAccess" -ArgumentList "1629b959-c0af-42a1-92f0-f6162060bdf1","Role" # Machine.LiveResponse
+    $rirAtpPermission10 = New-Object -TypeName "Microsoft.Open.AzureAD.Model.ResourceAccess" -ArgumentList "15405ab2-2103-4a3c-ad80-e829841cedcc","Role" # Machine.CollectForensics
+    $rirAtpPermission11 = New-Object -TypeName "Microsoft.Open.AzureAD.Model.ResourceAccess" -ArgumentList "41d209c7-2511-4fc9-b899-8008a3976f09","Role" # Library.Manage
+
+    Write-Log -Sev 1 -Line (__LINE__) -Msg "Creating MDE permissions assignment"
+    $RirAtp = New-Object -TypeName "Microsoft.Open.AzureAD.Model.RequiredResourceAccess"
+    $RirAtp.ResourceAppId = 'fc780465-2017-40d4-a0c5-307022471b92'
+    $RirAtp.ResourceAccess = $rirAtpPermission1, $rirAtpPermission2, $rirAtpPermission3, $rirAtpPermission4, $rirAtpPermission5, $rirAtpPermission6, $rirAtpPermission7, $rirAtpPermission8, $rirAtpPermission9, $rirAtpPermission10, $rirAtpPermission11
+
+    #---------------------------
+    # Creating service principal
+    #---------------------------
+
+    Write-Log -Sev 1 -Line (__LINE__) -Msg "RIR Service principal exists : $rirSpExists"
+
+    if ($rirSpExists) {
+        $newAvm = $AvmSpInfo
+        Write-Log -Sev 2 -Line (__LINE__) -Msg "RIR Serviceprincipal", $newRir.DisplayName, "exists and will be used."
+        Write-Log -Sev 1 -Line (__LINE__) -Msg "Assigning required permissions ..."
+    }
+    else {
+        Write-Log -Sev 1 -Line (__LINE__) -Msg "Creating RIR service principal"
+        try{
+            $newRir = New-AzADServicePrincipal -Scope /subscriptions/$subscriptionId/resourceGroups/$rgSentinel -DisplayName $rir -Role Reader -ErrorAction SilentlyContinue
+        }
+        catch {
+            $ErrorMessage = $_.Exception.Message
+            Write-Log -Sev 3 -Line (__LINE__) -Msg "Failed creating RIR service principal"
+            Write-Log -Sev 3 -Line (__LINE__) -Msg $ErrorMessage
+            Exit
+        }
+        Start-Sleep -Seconds 30
+        try {
+            $newRir = Get-AzureADApplication -All $true -ErrorAction SilentlyContinue | Where-Object { $_.DisplayName -eq $rir }
+        }
+        catch {
+            $ErrorMessage = $_.Exception.Message
+            Write-Log -Sev 3 -Line (__LINE__) -Msg "Failed obtaining RIR service principal details"
+            Write-Log -Sev 3 -Line (__LINE__) -Msg $ErrorMessage
+            Exit
+        }
+    }
+    if ($newRir) {
+        Write-Log -Sev 1 -Line (__LINE__) -Msg "Assigning API permissions ..."
+        try {
+            Set-AzureADApplication -ObjectId $newRir.ObjectId -RequiredResourceAccess $RirMsg, $RirMtp, $RirAtp
+        }
+        catch {
+            $ErrorMessage = $_.Exception.Message
+            Write-Log -Sev 3 -Line (__LINE__) -Msg "Failed assigning API permissions to RIR service principal"
+            Write-Log -Sev 3 -Line (__LINE__) -Msg $ErrorMessage
+            Exit
+        }
+        Write-Log -Sev 1 -Line (__LINE__) -Msg "API permissions assigned successfully"
+    }
+    else {
+        Write-Log -Sev 3 -Line (__LINE__) -Msg "Failed creating RIR service principal"
+    }
+    while($rirSpKeyConfirm -ne 'y' -and $rirSpKeyConfirm -ne 'n') {
+        Write-Host
+        $rirSpKeyConfirm = Read-Host "Do you want to create a new secret for this Service principal? [Y/N] "
+    }
+    if ($rirSpKeyConfirm -eq 'y') {
+        Write-Host
+        Write-Log -Sev 1 -Line (__LINE__) -Msg "Creating secret for RIR service principal"
+        Start-Sleep -Seconds 5
+        try {
+            $rirSecret = New-AzureADApplicationPasswordCredential -ObjectId $newRir.ObjectId -CustomKeyIdentifier "RIR Integration" -StartDate $startDate -EndDate $endDate
+        }
+        catch {
+            
+            $ErrorMessage = $_.Exception.Message
+            Write-Host
+            Write-Log -Sev 3 -Line (__LINE__) -Msg "Failed creating secret for RIR service principal"
+            Write-Log -Sev 3 -Line (__LINE__) -Msg $ErrorMessage
+            Exit
+        }
+    }
+    if ($rirSpKeyConfirm -eq 'y') {
+
+        Start-Sleep -Seconds 5
+        $getRirSecret = Get-AzureADApplicationPasswordCredential -ObjectId $newRir.ObjectId | Where-Object { $_.StartDate -eq $startDate }
+
+        $rirSecretStartDate = $rirSecret.StartDate
+        $rirSecretEndDate = $rirSecret.EndDate
+        $rirSecretValue = $rirSecret.Value
+        $rirSecretId = $getRirSecret.KeyId
+    }
+    else {
+        $rirSecretStartDate = "Null"
+        $rirSecretEndDate = "Null"
+        $rirSecretValue = "Null"
+        $rirSecretId = "Null"
+    }
+
+    Write-Log -Msg "Difenda RIR service principal details"
+    Write-Log -Sev 1 -Line (__LINE__) -Msg "RIR Service principal name: ", $newRir.DisplayName
+    Write-Log -Sev 1 -Line (__LINE__) -Msg "RIR Object Id:              ", $newRir.ObjectId
+    Write-Log -Sev 1 -Line (__LINE__) -Msg "RIR Application Id:         ", $newRir.AppId
+    Write-Log -Sev 1 -Line (__LINE__) -Msg "RIR Tenant Id:              ", $azContext.Subscription.TenantId
+    Write-Log -Sev 1 -Line (__LINE__) -Msg "RIR Subscription Id:        ", $azContext.Subscription.Id
+    Write-Log -Sev 1 -Line (__LINE__) -Msg "RIR Subscription name:      ", $azContext.Subscription.Name
+    Write-Log -Sev 1 -Line (__LINE__) -Msg "RIR Secret start date:      ", $rirSecretStartDate
+    Write-Log -Sev 1 -Line (__LINE__) -Msg "RIR Secret end date:        ", $rirSecretEndDate
+    Write-Log -Sev 1 -Line (__LINE__) -Msg "RIR Secret value:           ", $rirSecretValue
+
+    $rirSpInfoObject = @{
+        DisplayName = $newRir.DisplayName
+        ObjectId = $newRir.ObjectId
+        AppId = $newRir.AppId
+        TenantId = $azContext.Subscription.TenantId
+        SubscriptionId = $azContext.Subscription.Id
+        SubscriptionName = $azContext.Subscription.Name
+        SecretStart  = $rirSecretStartDate
+        SecretEnds = $rirSecretEndDate
+        SecretValue = $rirSecretValue
+        SecretId = $rirSecretId
+    }
+    
+    Write-Log -Sev 1 -Line (__LINE__) -Msg "RIR Service principal setup complete."
+
+    Write-Log -Msg "Please grant Admin consent"
+    Write-Host "   1. Open a new browser tab and connect to your Azure tenant as a Global Administrator."
+    Write-Host "   2. Select Microsoft Entra ID."
+    Write-Host "   3. Select 'App registrations', then 'All applications'."
+    Write-Host "   4. Search for", $newRir.DisplayName, ", select the App registration."
+    Write-Host "   5. Select 'API permissions'."
+    Write-Host "   6. Review the permissions configured and click on 'Grant admin consent for", $azTenant.Name, "'."
+    Write-Host "   7. and confirm 'Yes' when prompted."
+    Write-Host
+
+    Write-Host -NoNewLine 'Press [Enter] to continue ...'
+    $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown')
+}
+
+#########################################################################
 # Create/update Lighthouse delegations
 ##########################################################################
 
@@ -3288,75 +3505,6 @@ Write-Host -NoNewLine 'Press [Enter] to continue ...'
 $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown')
 
 #########################################################################
-# Creation of Managed Identity
-#########################################################################
-
-# Clear-Host
-# Write-Log -Msg "User provided managed identity section"
-# Write-Log -Sev 1 -Line (__LINE__) -Msg "Validating if user managed Id exists"
-# $midentity = Get-AzUserAssignedIdentity -ResourceGroupName $rgSentinel -Name $UamiName -ErrorAction SilentlyContinue
-# Start-Sleep -Seconds 10
-# if ($midentity.Name -eq $UamiName) {
-#     Write-Log -Sev 2 -Line (__LINE__) -Msg "User managed Id", $midentity.Name, "already exists in the resource group", $rgSentinel
-#     $confirmation = Read-Host "Do you want to use this Id? [y/n]"
-#     while($confirmation -ne "y") {
-#         if ($confirmation -eq 'n') { Exit }
-#         $confirmation = Read-Host "Do you want to use this Id? [y/n]"
-#     }
-# }
-# else {
-#     $createManagedId = $true
-# }
-
-# Write-Log -Sev 2 -Line (__LINE__) -Msg "Connecting to Azure AD"
-# try { Connect-AzureAD }
-# catch {
-#     $ErrorMessage = $_.Exception.Message
-#     Write-Log -Sev 2 -Line (__LINE__) -Msg "Invalid response connecting to Azure AD"
-#     Write-Log -Sev 2 -Line (__LINE__) -Msg $ErrorMessage
-# }
-
-# if ($createManagedId) {
-#     Write-Log -Sev 1 -Line (__LINE__) -Msg "Creating user provided managed identity"
-#     $midentity = New-AzUserAssignedIdentity -ResourceGroupName $rgSentinel -Name $UamiName -Location $location -ErrorAction SilentlyContinue
-#     Start-Sleep -Seconds 30
-#     if ($midentity.Id) {
-#         Write-Log -Sev 1 -Line (__LINE__) -Msg "User provided managed identity created successfully"
-#         Write-Log -Sev 1 -Line (__LINE__) -Msg "Managed Id name:  ", $midentity.Name
-#         Write-Log -Sev 1 -Line (__LINE__) -Msg "Managed Id type:  ", $midentity.Type
-#     }
-#     else {
-#         Write-Log -Sev 3 -Line (__LINE__) -Msg "Failed creating user provided managed identity"
-#         Write-Log -Sev 3 -Line (__LINE__) -Msg $_.Exception.Message
-#         Exit
-#     }
-# }
-# $roleAssigned = $true
-# $azureAdRole = Get-AzureADDirectoryRole | ? { $_.DisplayName -eq "Global Administrator" }
-
-# Write-Log -Sev 1 -Line (__LINE__) -Msg "Assigning Azure AD role", $azureAdRole.ObjectId ,"to user provided managed identity"
-# Start-Sleep -Seconds 30
-# try {
-#     Add-AzureADDirectoryRoleMember -ObjectId $azureAdRole.ObjectId -RefObjectId $midentity.PrincipalId -ErrorAction Stop
-# }
-# catch {
-#     $ErrorMessage = $_.Exception.Message
-#     if ($ErrorMessage -like "*added object references already exist*") {
-#         Write-Log -Sev 2 -Line (__LINE__) -Msg "Azure AD role was already assigned to user provided managed identity"
-#         $roleAssigned = $false
-#     }
-#     else {
-#         Write-Log -Sev 3 -Line (__LINE__) -Msg "Failed assigning Azure AD role to user provided managed identity"
-#         Write-Log -Sev 3 -Line (__LINE__) -Msg $_.Exception.Message
-#         Exit
-#     }
-# }
-
-# if ($roleAssigned) {
-#     Write-Log -Sev 1 -Line (__LINE__) -Msg "Azure AD role", $azureAdRole.ObjectId ,"successfully assigned to user provided managed identity"
-# }
-
-#########################################################################
 # Create AAD group for SecOps account. Reader on all active subscriptions
 ##########################################################################
 Clear-Host
@@ -3443,83 +3591,6 @@ Write-Log -Sev 1 -Line (__LINE__) -Msg " - Object ID    : ", $groupSso1Id
 Write-Log -Sev 1 -Line (__LINE__) -Msg " - Description  : ", $groupSso1Info.Description
 
 #---------------------------------------------------
-# High Priority Alert group
-#---------------------------------------------------
-Write-Host
-Write-Log -Sev 1 -Line (__LINE__) -Msg "Validating if Security group $groupSso2 exists ..."
-try {
-    $groupSso2Info = Get-AzureADGroup -SearchString $groupSso2
-}
-catch {
-    $ErrorMessage = $_.Exception.Message
-    Write-Host
-    Write-Log -Sev 3 -Line (__LINE__) -Msg "Failed obtaining information for Azure AD security group $groupSso2"
-    Write-Log -Sev 3 -Line (__LINE__) -Msg $ErrorMessage
-}
-if ($groupSso2Info) {
-    Write-Log -Sev 2 -Line (__LINE__) -Msg "Azure AD Security group ", $groupSso2Info.DisplayName, "already exists."
-    $groupSso2Id = $groupSso2Info.ObjectId
-}
-else {
-    Write-Host
-    Write-Log -Sev 1 -Line (__LINE__) -Msg "Creating Azure AD security group $groupSso2 ..."
-    try {
-        $groupSso2Info = New-AzureADMSGroup -DisplayName $groupSso2 -Description 'Difenda MXDR - SSO group for HPI notifications' -MailEnabled $false -SecurityEnabled $true -MailNickName "DifendaMXDR"
-    }
-    catch {
-        $ErrorMessage = $_.Exception.Message
-        Write-Log -Sev 3 -Line (__LINE__) -Msg "Failed creating Azure AD security group"
-        Write-Log -Sev 3 -Line (__LINE__) -Msg $ErrorMessage
-        Exit
-    }
-    $groupSso2Id = $groupSso2Info.Id
-    Start-Sleep -Seconds 5
-}
-
-Write-Log -Sev 1 -Line (__LINE__) -Msg $groupSso2Info.DisplayName, "details."
-Write-Log -Sev 1 -Line (__LINE__) -Msg " - Display Name : ", $groupSso2Info.DisplayName
-Write-Log -Sev 1 -Line (__LINE__) -Msg " - Object ID    : ", $groupSso2Id
-Write-Log -Sev 1 -Line (__LINE__) -Msg " - Description  : ", $groupSso2Info.Description
-
-#---------------------------------------------------
-# No Alert group
-#---------------------------------------------------
-Write-Host
-Write-Log -Sev 1 -Line (__LINE__) -Msg "Validating if Security group $groupSso3 exists ..."
-try {
-    $groupSso3Info = Get-AzureADGroup -SearchString $groupSso3
-}
-catch {
-    $ErrorMessage = $_.Exception.Message
-    Write-Host
-    Write-Log -Sev 3 -Line (__LINE__) -Msg "Failed obtaining information for Azure AD security group $groupSso3"
-    Write-Log -Sev 3 -Line (__LINE__) -Msg $ErrorMessage
-}
-if ($groupSso3Info) {
-    Write-Log -Sev 2 -Line (__LINE__) -Msg "Azure AD Security group ", $groupSso3Info.DisplayName, "already exists."
-    $groupSso3Id = $groupSso3Info.ObjectId
-}
-else {
-    Write-Host
-    Write-Log -Sev 1 -Line (__LINE__) -Msg "Creating Azure AD security group $groupSso3 ..."
-    try {
-        $groupSso3Info = New-AzureADMSGroup -DisplayName $groupSso3 -Description 'Difenda MXDR - SSO group for suppressed notifications' -MailEnabled $false -SecurityEnabled $true -MailNickName "DifendaMXDR"
-    }
-    catch {
-        $ErrorMessage = $_.Exception.Message
-        Write-Log -Sev 3 -Line (__LINE__) -Msg "Failed creating Azure AD security group"
-        Write-Log -Sev 3 -Line (__LINE__) -Msg $ErrorMessage
-        Exit
-    }
-    $groupSso3Id = $groupSso3Info.Id
-}
-
-Write-Log -Sev 1 -Line (__LINE__) -Msg $groupSso3Info.DisplayName, "details."
-Write-Log -Sev 1 -Line (__LINE__) -Msg " - Display Name : ", $groupSso3Info.DisplayName
-Write-Log -Sev 1 -Line (__LINE__) -Msg " - Object ID    : ", $groupSso3Id
-Write-Log -Sev 1 -Line (__LINE__) -Msg " - Description  : ", $groupSso3Info.Description
-
-#---------------------------------------------------
 # List all subscriptions in tenant
 #---------------------------------------------------
 Write-Log -Msg "Assigning Azure Reader role on all subscriptions to the SecOps AAD Security group. Required for incident investigation and response."
@@ -3586,11 +3657,10 @@ $body = @{
     DevOpsServicePrincipal = $devopsInfoObject
     ResponseServicePrincipal = $responseSpInfoObject
     AvmServicePrincipal = $InfoAvmSp
+    RirServicePrincipal = $rirSpInfoObject
     SentinelDelegation = $newSentinelDelegation
     IntegrationDelegation = $newIntegrationDelegation
     SsoItSecurity = $groupSso1Info
-    SsoHpiNotifications = $groupSso2Info
-    SsoNoNotifications = $groupSso3Info
     IsAvmCustomer = $isavm
     IsOtCustomer = $isOt
     UserInfo = $userInfoObject

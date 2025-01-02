@@ -2199,10 +2199,10 @@ $sentinelArmTemplateParams = @{
     pricingTier = 'PerGB2018';
     dailyQuota = $sentinelQuota;
     dataRetention = $sentinelRetention;
-    tableRetention = $tableRetention;
+    #tableRetention = $tableRetention;
     immediatePurgeDataOn30Days = $false;
-    location = $rgSentinel.Location;
-    subscriptionId = $azContext.Subscription.Id
+    location = $rgSentinel.Location
+    #subscriptionId = $azContext.Subscription.Id
 }
 
 Write-Log -Sev 1 -Line (__LINE__) -Msg "$SentinelWsAction Microsoft Sentinel workspace $SentinelWs in the resource group $rgSentinel"

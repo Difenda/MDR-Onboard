@@ -2056,7 +2056,7 @@ $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown')
 #########################################################################
 
 try {
-    $downloadSentinelArmTemplate = Invoke-WebRequest https://raw.githubusercontent.com/Difenda/MDR-Onboard/main/Scripts/MxdrTemplates/sentinelArmTemplate.json -OutFile ./sentinelArmTemplate.json -ErrorAction Stop
+    $downloadSentinelArmTemplate = Invoke-WebRequest https://raw.githubusercontent.com/Difenda/MDR-Onboard/main/Scripts/MxdrTemplates/sentinelArmTemplateNew.json -OutFile ./sentinelArmTemplate.json -ErrorAction Stop
 }
 catch {
     $ErrorMessage = $_.Exception.Message
@@ -2078,10 +2078,10 @@ $sentinelArmTemplateParams = @{
     pricingTier = 'PerGB2018';
     dailyQuota = $sentinelQuota;
     dataRetention = $sentinelRetention;
-    tableRetention = $tableRetention;
+    # tableRetention = $tableRetention;
     immediatePurgeDataOn30Days = $false;
-    location = $rgSentinel.Location;
-    subscriptionId = $azContext.Subscription.Id
+    location = $rgSentinel.Location
+    # subscriptionId = $azContext.Subscription.Id
 }
 
 Write-Log -Sev 1 -Line (__LINE__) -Msg "$SentinelWsAction Microsoft Sentinel workspace $SentinelWs in the resource group $rgSentinel"

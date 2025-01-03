@@ -1640,7 +1640,7 @@ else {
     Write-Log -Sev 1 -Line (__LINE__) -Msg "Installing PowerShell module Az.KeyVault."
     Install-Module -Name Az.KeyVault -Scope CurrentUser -Force
     Import-Module -Name Az.KeyVault -ErrorAction SilentlyContinue
-    Write-Log -Sev 1 -Line (__LINE__) -Msg "Installed module Az.KeyVault.", $(Get-Module -Name Az.KeyVault).Version
+    Write-Log -Sev 1 -Line (__LINE__) -Msg "Installed module Az.KeyVault."
 }
 
 Write-Log -Msg "PowerShell module Az.SecurityInsights"
